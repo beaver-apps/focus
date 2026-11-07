@@ -1,0 +1,1675 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pixel Beaver</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen&display=swap" rel="stylesheet">
+<style>
+  /* pixel-art palette taken from the beaver himself */
+  :root { --bg:#f6f1ea; --fg:#3b2a20; --ink:#2a1a12; --fur:#9A5B3B; --fur-hi:#c07a55; --fur-lo:#6f3f27;
+          --red:#9A0030; --red-hi:#c8285a; --red-lo:#650020; --label:#fff4e3; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1d1714; --fg:#f1e6da; --ink:#0c0806; }
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; min-height:100vh; padding:16px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+    background:var(--bg); color:var(--fg);
+    font:14px/1.4 "Silkscreen", ui-monospace, Consolas, monospace;
+  }
+  canvas {
+    width:min(92vw, 660px); height:auto;
+    image-rendering:pixelated; image-rendering:crisp-edges;
+    cursor:pointer;
+  }
+  .row { display:flex; flex-wrap:wrap; gap:14px 14px; justify-content:center; max-width:760px; padding:4px; }
+  /* chunky pixel buttons: a 4px dark outline on each side (which leaves the corners notched, like
+     a sprite), a light bevel top-left and a dark bevel bottom-right */
+  button {
+    font:inherit; font-size:13px; letter-spacing:.5px; color:var(--label); text-shadow:2px 2px 0 var(--fur-lo);
+    background:var(--fur); border:0; border-radius:0; padding:8px 12px; margin:4px; cursor:pointer;
+    box-shadow:
+      0 -4px 0 0 var(--ink), 0 4px 0 0 var(--ink), -4px 0 0 0 var(--ink), 4px 0 0 0 var(--ink),
+      inset 4px 4px 0 0 var(--fur-hi), inset -4px -4px 0 0 var(--fur-lo);
+    image-rendering:pixelated;
+  }
+  button:hover { filter:brightness(1.08); }
+  button:active { transform:translateY(4px);
+    box-shadow:
+      0 -4px 0 0 var(--ink), 0 4px 0 0 var(--ink), -4px 0 0 0 var(--ink), 4px 0 0 0 var(--ink),
+      inset 4px 4px 0 0 var(--fur-lo), inset -4px -4px 0 0 var(--fur-hi); }
+  button:focus-visible { outline:4px solid var(--red-hi); outline-offset:6px; }
+  button[aria-pressed="true"] { background:var(--red); text-shadow:2px 2px 0 var(--red-lo);
+    box-shadow:
+      0 -4px 0 0 var(--ink), 0 4px 0 0 var(--ink), -4px 0 0 0 var(--ink), 4px 0 0 0 var(--ink),
+      inset 4px 4px 0 0 var(--red-hi), inset -4px -4px 0 0 var(--red-lo); }
+  .hint { opacity:.65; font-size:13px; text-align:center; }
+</style>
+</head>
+<body>
+  <canvas id="c" aria-label="Animated pixel beaver"></canvas>
+  <div class="row" id="modes">
+    <button data-mode="idle" aria-pressed="true">Idle</button>
+    <button data-mode="gnaw">Gnaw</button>
+    <button data-mode="slap">Tail slap</button>
+    <button data-mode="jump">Jump</button>
+    <button data-mode="wave">Wave</button>
+    <button data-mode="happy">Happy</button>
+    <button data-mode="sleep">Sleep</button>
+    <button data-mode="work">Work</button>
+    <button data-mode="swim">Swim</button>
+    <button data-mode="eat">Eat</button>
+    <button data-mode="build">Card castle</button>
+    <button data-mode="walk">Walk</button>
+    <button data-mode="burrow">Climb down</button>
+    <button data-mode="dam">Build dam</button>
+    <button data-mode="dance">Dance</button>
+    <button data-mode="rain">Rainy day</button>
+    <button data-mode="fish">Fishing</button>
+    <button data-mode="scared">Scared</button>
+    <button data-mode="sneeze">Sneeze</button>
+    <button data-mode="brush">Brush teeth</button>
+    <button data-mode="carry">Carry acorns</button>
+    <button data-mode="dizzy">Dizzy</button>
+    <button data-mode="sunbathe">Sunbathe</button>
+    <button data-mode="sunny">Sunny day</button>
+    <button data-mode="angry">Angry</button>
+    <button data-mode="sad">Sad</button>
+    <button data-mode="bed">Bedtime</button>
+    <button data-mode="shower">Shower</button>
+    <button data-mode="cook">Cooking</button>
+    <button data-mode="bake">Baking</button>
+    <button data-mode="party">Celebrate</button>
+    <button data-mode="toilet">Toilet</button>
+    <button data-mode="hands">Wash hands</button>
+    <button data-mode="dishes">Wash dishes</button>
+    <button data-mode="code">Coding</button>
+    <button data-mode="hack">Hackerman</button>
+    <button data-mode="tv">Watch TV</button>
+    <button data-mode="juice">Drink juice</button>
+    <button data-mode="soda">Drink soda</button>
+    <button data-mode="water">Drink water</button>
+    <button data-mode="cozy">Cozy fire</button>
+    <button data-mode="turn">Turn around</button>
+    <button data-mode="kick">Kick ball</button>
+    <button data-mode="paint">Painting</button>
+    <button data-mode="game">Gaming</button>
+    <button data-mode="snowman">Snowman</button>
+    <button data-mode="angel">Snow angel</button>
+    <button data-mode="call">Video call</button>
+    <button data-mode="tired">Sleep deprived</button>
+    <button data-mode="wow">Happy shock</button>
+    <button data-mode="fit">Throw a fit</button>
+    <button data-mode="lolly">Lollipop</button>
+    <button data-mode="swing">Swing</button>
+    <button data-mode="nope">Disagree</button>
+    <button data-mode="sigh">Disappointed</button>
+    <button data-mode="agree">Agree</button>
+  </div>
+  <div class="row"><button id="export">Download sprite sheet</button></div>
+  <div class="hint">Click the beaver to slap its tail &middot; Space to jump</div>
+
+<script>
+// ---- Art: 24 x 20 grid traced from your sprite --------------------------
+const PAL = {
+  b:'#9A5B3B', r:'#9A0030', k:'#000000', w:'#ffffff', p:'#e88a9a',
+  s:'rgba(60,35,20,.18)', d:'#cbb9a4', wd:'#c99a5e', wl:'#e2bf86', wk:'#7a5230',
+  z:'#8a7da8', hy:'#f2c230', hd:'#c99a12', sw:'#7cc6ff',
+  w1:'rgba(84,166,226,.93)', w2:'rgba(58,134,200,.96)', w3:'#2f6fae', wc:'#a9dbf7', wf:'#e8f6ff',
+  hk:'#2a1a12', hr:'#6b4a2e',
+  cr:'#b9c2c9', tl:'#dfe9f0', sv:'#3b3f45', fl:'#ff8c2a', pn:'#2b2b2b', ov:'#c9ccd1', dg:'#f1d9a8',
+  sc:'#1d2433', cg:'#3ddc84', hx:'#0d1117', hm:'#1f6f45', hd2:'#2a2d34', hk3:'#3a3e47', tv:'#222222',
+  bk:'#c4553f', bs:'#e9c46a', gw:'rgba(255,170,60,.22)',
+  rd:'#6e0022',
+  sk:'#cfe0ee', sn:'#f2f6f9', sn2:'#d9e5ee', sn3:'#b9cbda',
+  nb:'#2f6db3', nw:'#ffffff', pl:'#e8a0b4', qb:'#7a9fd6',
+  su:'#ffd23f', sr:'#ffe98a', sd:'#ecd28f', gs:'#bfe6f5', fs:'#8fc1d4', cl:'#9aa3ad', ba:'#b8473a',
+  ce:'#d23a3a', cb:'#3a6fc4', cf:'#e0b13a',
+  ga:'#6cbf3c', gh:'#a6e06a', gl:'#3f8a2a', ac:'#f3e6b0', bd:'#7d4528',
+};
+const CELL = 16, COLS = 44, ROWS = 30, OX = 8, OY = 7;   // OX centres the body (cols 7-20) on stage
+
+// Beaver paddle tail: resting (your original), lifted, slapped flat on the ground
+const TAIL = {
+  rest: [[14,6,6],[15,4,6],[16,1,6],[17,0,6],[18,0,5],[19,0,4]],
+  up:   [[11,2,3],[12,1,4],[13,1,5],[14,2,6],[15,3,6],[16,4,6],[17,5,6]],
+  flat: [[17,5,6],[18,-1,6],[19,-2,6]],
+  none: [],                                                   // tucked away (sitting on the couch)
+};
+const ARM_ROWS = { down:[9,12], mid:[6,9], up:[4,7], hold:[10,13], lift:[1,4], paddle:[7,10], swing:[8,11] };
+
+// apple being eaten, one bite at a time: [col, row, colour]
+const APPLE_FULL = [[13,12,'ga'],[14,12,'ga'],[12,13,'ga'],[13,13,'gh'],[14,13,'ga'],[15,13,'ga'],
+                    [12,14,'ga'],[13,14,'ga'],[14,14,'ga'],[15,14,'ga'],[13,15,'ga'],[14,15,'ga'],[15,12,'gl']];
+const bitten = gone => APPLE_FULL.filter(([c, r]) => !gone.some(([gc, gr]) => gc === c && gr === r))
+                                  .concat(gone.map(([c, r]) => [c, r, 'ac']).filter(([c, r]) => c > 12 && r > 12 && r < 15));
+const APPLE = [
+  APPLE_FULL,
+  bitten([[13,12],[12,13]]),
+  bitten([[13,12],[14,12],[12,13],[13,13],[12,14]]),
+  [[13,12,'wk'],[13,13,'ac'],[14,13,'ac'],[13,14,'ac'],[13,15,'ga'],[14,15,'ga']],   // core
+];
+
+const DEF = { dy:0, squash:0, tail:'rest', armL:'down', armR:'down', eyes:'open',
+              teeth:'out', nose:0, blush:0, ear:0, dust:0, stick:0, chips:null,
+              log:null, hat:0, sweat:null, zs:null,
+              water:0, wave:0, splash:null, apple:null, paws:0, crumbs:null,
+              x:0, flip:0, lift:null, castle:0, fall:0, held:0, hole:0, rim:0,
+              earsFlat:0, bodyCol:null, under:null, over:null, noShadow:0, sit:0, view:null,
+              rot:0, pivot:null, kick:0, ghost:0, scale:0, earPose:null };
+
+// hole in the ground: [back row 19, opening row 20, dirt rim row 21] as [c0, c1] per size
+const HOLE = { 1: [[11,16],[10,17],[11,16]], 2: [[5,22],[3,24],[4,23]] };
+
+// card castle: 3 levels of A-frame "tents" with flat cards between, placed in this order
+const PIECES = [['t',20,17],['t',24,17],['t',28,17],['f',21,30,16],['t',22,13],['t',26,13],['f',23,28,12],['t',24,9]];
+const WOBBLE = [[0,0],[0,0],[1,0],[0,1],[-1,2],[2,2],[1,4],[3,5]];          // mid-collapse offsets
+const SCATTER = [[17,19,19,'ce'],[21,23,19,'cb'],[25,27,19,'cf'],[29,31,19,'ce'],
+                 [19,21,18,'cb'],[24,26,18,'ce'],[28,30,18,'cb'],[32,33,19,'cf']];
+
+// draw(): normally just drawBody(). When f.rot is set (falling over), the beaver alone is drawn to an
+// offscreen canvas and rotated about f.pivot (beaver coords, default his back foot), while the scenery stays upright.
+let OFF = null;
+function draw(g, f, ox, oy, c) {
+  if (!f.rot && !f.scale) return drawBody(g, f, ox, oy, c);
+  drawBody(g, { ...f, ghost:1, over:null }, ox, oy, c);                       // scenery behind
+  OFF = OFF || document.createElement('canvas');
+  OFF.width = COLS * c; OFF.height = ROWS * c;
+  const o = OFF.getContext('2d');
+  drawBody(o, { ...f, rot:0, under:null, over:null, noShadow:1, x:0 }, OX, OY, c);
+  const [pc, pr] = f.pivot || [8, 20];
+  g.save();
+  g.imageSmoothingEnabled = false;
+  g.translate((ox + f.x + pc) * c, (oy + pr) * c);
+  g.rotate((f.rot || 0) * Math.PI / 2);                                        // -1 = a quarter turn backwards
+  if (f.scale) g.scale(f.scale, f.scale);                                     // bigger = closer to the viewer
+  g.drawImage(OFF, -(OX + pc) * c, -(OY + pr) * c);
+  g.restore();
+  drawBody(g, { ...f, ghost:1, under:null }, ox, oy, c);                      // scenery in front
+}
+
+function drawBody(g, f, ox, oy, c) {
+  // beaver pixels follow f.x and mirror when f.flip; `world` pixels (water, cards) stay put;
+  // 'face' pixels follow f.x but never mirror (so the long tooth is always on the left)
+  const R = (c0, r0, c1, r1, dy, col, dx = 0, world = false) => {
+    if (f.ghost && world !== true) return;                                     // ghost: scenery only
+    let a0 = c0 + dx, a1 = c1 + dx;
+    if (world !== true) {
+      if (f.flip && world !== 'face') { const t = 27 - a1; a1 = 27 - a0; a0 = t; }
+      a0 += f.x; a1 += f.x;
+    }
+    g.fillStyle = PAL[col === 'b' && f.bodyCol ? f.bodyCol : col];   // bodyCol tints the fur (angry)
+    g.fillRect((ox + a0) * c, (oy + r0 + dy) * c, (a1 - a0 + 1) * c, (r1 - r0 + 1) * c);
+  };
+  const W = (c0, r0, c1, r1, col) => R(c0, r0, c1, r1, 0, col, 0, true);
+  // props can be faded in/out during transitions: f.fade = { water:0.5, ... }
+  const FA = k => { g.globalAlpha = f.fade && f.fade[k] !== undefined ? f.fade[k] : 1; };
+  const A1 = () => { g.globalAlpha = 1; };
+  // shadow on the floor (shrinks while airborne)
+  const a = Math.max(0, -f.dy);
+  if (!f.water && !f.hole && !f.noShadow) R(1 + a, 20, 21 - a, 20, 0, 's');
+  // overlays: lists of [c0, r0, c1, r1, colour, mode]; mode 'b' = on the body (moves + mirrors with it),
+  // 'f' = on the face (moves, never mirrors), 'g' = on the ground under the beaver, 'w' = fixed in the world
+  const OV = list => {
+    if (!list) return;
+    FA('fx');
+    for (const [c0, r0, c1, r1, col, m = 'b'] of list) {
+      if (m === 'w') W(c0, r0, c1, r1, col);
+      else if (m === 'g') R(c0, r0, c1, r1, 0, col);
+      else if (m === 'f') R(c0, r0, c1, r1, up, col, 0, 'face');
+      else R(c0, r0, c1, r1, up, col);
+    }
+    A1();
+  };
+  const up = f.dy + (f.squash ? 1 : 0);  // upper body squashes down
+  OV(f.under);                           // scenery behind the beaver (sun, pond, sand, dam...)
+  // other viewing angles (used by the 360 turn): side profile facing right (mirror with flip) and back view
+  if (f.view === 'side') {
+    if (f.tail !== 'none') { R(2, 15, 7, 18, f.dy, 'r'); R(3, 14, 6, 14, f.dy, 'r'); R(3, 19, 6, 19, f.dy, 'r'); R(7, 16, 8, 17, f.dy, 'r'); }   // flat tail behind
+    R(9, 17, 12, 19, f.dy, 'bd');                                                                        // far leg
+    if (f.kick) { R(17, 14, 22, 16, f.dy, 'b'); R(22, 14, 22, 16, f.dy, 'bd'); }                           // near leg kicking forward
+    else R(14, 17, 17, 19, f.dy, 'b');                                                                   // near leg
+    R(11, 0, 13, 3, up, 'b'); R(12, 2, 12, 3, up, 'r');                                                 // ear
+    R(8, 4, 19, 16, up, 'b');                                                                          // head + body
+    R(20, 8, 21, 11, up, 'b'); R(20, 8, 21, 8, up, 'k');                                               // snout + nose
+    R(20, 12, 20, 13, up, 'w'); R(21, 12, 21, 12, up, 'w');                                            // buck teeth
+    if (f.eyes === 'happy') R(16, 8, 17, 8, up, 'k');                                                 // eye
+    else if (f.eyes === 'dizzy') { R(15, 6, 15, 6, up, 'k'); R(17, 6, 17, 6, up, 'k'); R(16, 7, 16, 7, up, 'k'); R(15, 8, 15, 8, up, 'k'); R(17, 8, 17, 8, up, 'k'); }
+    else if (f.eyes === 'closed') R(16, 8, 17, 8, up, 'k');
+    else R(16, 7, 17, 8, up, 'k');
+    if (f.blush) R(17, 10, 18, 10, up, 'p');
+    R(14, 9, 16, 12, up, 'bd');                                                                        // near arm
+    OV(f.over); return;
+  }
+  if (f.view === 'back') {
+    R(8, 0, 11, 3, up, 'b'); R(16, 0, 19, 3, up, 'b'); R(8, 0, 8, 3, up, 'bd'); R(19, 0, 19, 3, up, 'bd');   // backs of the ears
+    R(7, 4, 20, 16, up, 'b'); R(4, 9, 6, 12, up, 'b'); R(21, 9, 23, 12, up, 'b');
+    R(7, 17, 12, 19, f.dy, 'b'); R(15, 17, 20, 19, f.dy, 'b');
+    R(12, 11, 15, 11, f.dy, 'r'); R(10, 12, 17, 19, f.dy, 'r');                                            // tail hanging down his back
+    for (const [tc, tr] of [[11, 14], [13, 13], [15, 14], [12, 16], [14, 17], [16, 16], [11, 18], [15, 18]]) R(tc, tr, tc, tr, f.dy, 'rd');
+    OV(f.over); return;
+  }
+  // hole: back edge goes behind the beaver, and everything below ground level is clipped away
+  if (f.hole) {
+    const [b] = HOLE[f.hole]; FA('hole'); R(b[0], 19, b[1], 19, 0, 'hk'); A1();
+    g.save(); g.beginPath(); g.rect(0, 0, g.canvas.width, (oy + 20) * c); g.clip();
+  }
+
+  const lo = f.dy;                       // legs + tail
+
+  for (const [r, c0, c1] of TAIL[f.tail]) R(c0, r, c1, r, lo, 'r');
+  if (f.dust) {                          // dust puff from the tail slap
+    const s = f.dust;
+    R(-3 - s, 19 - s, -3 - s, 19 - s, 0, 'd'); R(-2, 17 - s, -2, 17 - s, 0, 'd');
+    R(-4 - s, 18, -4 - s, 18, 0, 'd');
+  }
+  const liftL = f.lift === 'L' ? 1 : 0, liftR = f.lift === 'R' ? 1 : 0;
+  if (!f.sit) {                                  // standing legs (sitting legs are drawn later, in front of the seat)
+    R(7, 17 - liftL, 12, 19 - liftL, lo, 'b');   // left leg
+    R(15, 17 - liftR, 20, 19 - liftR, lo, 'b');  // right leg
+  }
+
+  // ears
+  if (f.earsFlat) {                      // ears pinned back flat (scared, sad, sneeze)
+    R(4, 3, 8, 4, up, 'b'); R(4, 3, 5, 3, up, 'r');
+    R(19, 3, 23, 4, up, 'b'); R(22, 3, 23, 3, up, 'r');
+  } else if (f.earPose === 'up') {       // ears floating up tall (weightless moment)
+    R(8, -1, 11, 3, up, 'b'); R(8, 1, 9, 3, up, 'r');
+    R(16, -1, 19, 3, up, 'b'); R(18, 1, 19, 3, up, 'r');
+  } else if (f.earPose === 'down') {     // ears swept back by the wind: short stubs
+    R(8, 2, 11, 3, up, 'b'); R(8, 2, 9, 3, up, 'r');
+    R(16, 2, 19, 3, up, 'b'); R(18, 2, 19, 3, up, 'r');
+  } else if (f.earPose === 'out') {      // ears flopping outward
+    R(6, 0, 9, 1, up, 'b'); R(7, 2, 11, 3, up, 'b'); R(6, 0, 7, 1, up, 'r'); R(7, 2, 8, 3, up, 'r');
+    R(18, 0, 21, 1, up, 'b'); R(16, 2, 20, 3, up, 'b'); R(20, 0, 21, 1, up, 'r'); R(19, 2, 20, 3, up, 'r');
+  } else {
+    R(8, 0, 11, 3, up, 'b');  R(8, 2, 9, 3, up, 'r');
+    R(16, 0, 19, 3, up, 'b', f.ear); R(18, 2, 19, 3, up, 'r', f.ear);
+  }
+  // body
+  R(7, 4, 20, 16, up, 'b');
+  // eyes
+  if (f.eyes === 'open')   { R(9, 8, 10, 9, up, 'k'); R(17, 8, 18, 9, up, 'k'); }
+  if (f.eyes === 'closed') { R(9, 9, 10, 9, up, 'k'); R(17, 9, 18, 9, up, 'k'); }
+  if (f.eyes === 'happy')  {
+    R(9, 8, 10, 8, up, 'k'); R(8, 9, 8, 9, up, 'k'); R(11, 9, 11, 9, up, 'k');
+    R(17, 8, 18, 8, up, 'k'); R(16, 9, 16, 9, up, 'k'); R(19, 9, 19, 9, up, 'k');
+  }
+  if (f.eyes === 'wide')   { R(9, 7, 10, 9, up, 'k'); R(17, 7, 18, 9, up, 'k'); R(9, 7, 9, 7, up, 'wf'); R(17, 7, 17, 7, up, 'wf'); }
+  if (f.eyes === 'angry' || f.eyes === 'sad') {
+    R(9, 9, 10, 9, up, 'k'); R(17, 9, 18, 9, up, 'k');                  // narrowed eyes
+    const ang = f.eyes === 'angry';                                     // brows: angry slope in, sad slope up
+    R(8, ang ? 6 : 7, 9, ang ? 6 : 7, up, 'k'); R(10, ang ? 7 : 6, 11, ang ? 7 : 6, up, 'k');
+    R(16, ang ? 7 : 6, 17, ang ? 7 : 6, up, 'k'); R(18, ang ? 6 : 7, 19, ang ? 6 : 7, up, 'k');
+  }
+  if (f.eyes === 'dizzy') for (const e of [8, 17]) {                   // X X eyes
+    R(e, 7, e, 7, up, 'k'); R(e + 2, 7, e + 2, 7, up, 'k'); R(e + 1, 8, e + 1, 8, up, 'k');
+    R(e, 9, e, 9, up, 'k'); R(e + 2, 9, e + 2, 9, up, 'k');
+  }
+  // nose (wiggles while gnawing) + buck teeth — always visible
+  R(13, 9 - f.nose, 14, 9 - f.nose, up, 'k');
+  if (f.teeth === 'out') { R(13, 10, 14, 10, up, 'w', 0, 'face'); R(13, 11, 13, 11, up, 'w', 0, 'face'); R(14, 11, 14, 11, up, 'r', 0, 'face'); }
+  else                   { R(13, 10, 14, 10, up, 'w', 0, 'face'); }   // chomp: teeth pulled up
+  // blush
+  if (f.blush) { R(8, 11, 9, 11, up, 'p'); R(18, 11, 19, 11, up, 'p'); }
+  // hard hat
+  if (f.hat) { FA('hat'); R(13, 1, 14, 1, up, 'hy'); R(12, 2, 15, 3, up, 'hy'); R(10, 4, 17, 4, up, 'hd'); A1(); }
+  // wood: a log (2 rows tall, top row `r`)
+  const LOG = r => {
+    R(2, r, 25, r + 1, up, 'wd'); R(2, r, 25, r, up, 'wl');
+    R(2, r, 2, r + 1, up, 'wk'); R(25, r, 25, r + 1, up, 'wk');
+  };
+  if (f.stick) { FA('stick'); LOG(12); R(13, 12, 14, 12, up, 'wk'); A1(); }   // stick being gnawed, with bite mark
+  if (f.log !== null) { FA('log'); LOG(f.log); A1(); }
+  // sweat drop
+  if (f.sweat) R(f.sweat[0], f.sweat[1], f.sweat[0], f.sweat[1], up, 'sw');
+  // sleepy Zzz (4x4 letters that float up)
+  if (f.zs) for (const [zc, zr] of f.zs) {
+    R(zc, zr, zc + 3, zr, 0, 'z'); R(zc + 2, zr + 1, zc + 2, zr + 1, 0, 'z'); R(zc + 1, zr + 2, zc + 1, zr + 2, 0, 'z'); R(zc, zr + 3, zc + 3, zr + 3, 0, 'z');
+  }
+  // arms (drawn last so paws grip the stick); a number means "top row" (used mid-transition)
+  const arm = v => typeof v === 'number' ? [v, v + 3] : ARM_ROWS[v];
+  if (f.armL !== 'none') { const [l0, l1] = arm(f.armL); R(4, l0, 6, l1, up, 'b'); }
+  if (f.armR !== 'none') { const [r0, r1] = arm(f.armR); R(21, r0, 23, r1, up, 'b'); }
+  // rim: arms reach from the shoulders down to the ground and hold the beaver up as he lowers himself
+  if (f.rim && 9 + up <= 18) { R(4, 9 + up, 6, 18, 0, 'b'); R(21, 9 + up, 23, 18, 0, 'b'); }
+  // wood chips flying
+  if (f.chips) for (const [cc, rr] of f.chips) R(cc, rr, cc, rr, up, 'wl');
+  // apple held in both front paws
+  FA('apple');
+  if (f.apple !== null) for (const [ac, ar, col] of APPLE[f.apple]) R(ac, ar, ac, ar, up, col);
+  if (f.paws) { R(10, 13, 11, 14, up, 'bd'); R(16, 13, 17, 14, up, 'bd'); }
+  A1();
+  if (f.crumbs) for (const [cc, rr] of f.crumbs) R(cc, rr, cc, rr, 0, 'ga');
+  // water (swimming): a pond with rounded banks, deeper colour lower down, ripples around the beaver
+  if (f.water) {
+    FA('water');
+    const POND = [[13,-7,34,'w1'],[14,-7,34,'w1'],[15,-7,34,'w2'],[16,-6,33,'w2'],[17,-6,33,'w2'],
+                  [18,-5,32,'w3'],[19,-4,31,'w3'],[20,-2,29,'w3']];
+    for (const [r, c0, c1, col] of POND) W(c0, r, c1, r, col);
+    for (let c = -6; c <= 33; c++)                                   // rolling crests on the surface
+      if ((((c + f.wave) % 4) + 4) % 4 === 0) W(c, 12, c + 1, 12, 'wc');
+    for (let c = -5; c <= 31; c++)                                   // glints drifting under the surface
+      if ((((c - f.wave * 3) % 11) + 11) % 11 === 0) { W(c, 15, c + 1, 15, 'wc'); W(c + 5, 18, c + 6, 18, 'w2'); }
+    const o = f.wave % 2;                                            // ripples hugging the beaver
+    R(5 - o, 13, 6 - o, 13, 0, 'wf'); R(21 + o, 13, 22 + o, 13, 0, 'wf');
+    R(3 - o, 14, 3 - o, 14, 0, 'wc'); R(24 + o, 14, 24 + o, 14, 0, 'wc');
+    A1();
+  }
+  if (f.splash) for (const [sc, sr] of f.splash) R(sc, sr, sc, sr, 0, 'wf');
+  // card castle
+  if (f.held) { R(24, 3, 24, 4, up, 'ce'); R(24, 5, 24, 5, up, 'cb'); }   // card in paw
+  FA('castle');
+  if (f.fall === 2) for (const [s0, s1, sr, col] of SCATTER) W(s0, sr, s1, sr, col);
+  else for (let k = 0; k < f.castle; k++) {
+    const [ddx, ddy] = f.fall ? WOBBLE[k] : [0, 0], pc = PIECES[k];
+    if (pc[0] === 't') {
+      const x = pc[1] + ddx, t = pc[2] + ddy;
+      W(x + 1, t, x + 1, t, 'ce'); W(x + 2, t, x + 2, t, 'cb');
+      W(x, t + 1, x, t + 2, 'ce'); W(x + 3, t + 1, x + 3, t + 2, 'cb');
+    } else W(pc[1] + ddx, pc[3] + ddy, pc[2] + ddx, pc[3] + ddy, 'cf');
+  }
+  A1();
+  OV(f.over);                            // things in front of the beaver (rod, shades, leaf, notes...)
+  if (f.sit) {                           // sitting: short legs dangle down over the front of the seat, moving with him
+    R(8, 16, 11, 20, lo, 'b'); R(16, 16, 19, 20, lo, 'b');
+    R(8, 20, 11, 20, lo, 'bd'); R(16, 20, 19, 20, lo, 'bd');
+  }
+  // hole: front lip and dirt rim are drawn over the beaver as it climbs in
+  if (f.hole) {
+    g.restore();
+    const [, o, rim] = HOLE[f.hole];
+    FA('hole');
+    R(o[0], 20, o[1], 20, 0, 'hk'); R(rim[0], 21, rim[1], 21, 0, 'hr');
+    R(o[0] - 1, 20, o[0] - 1, 20, 0, 'hr'); R(o[1] + 1, 20, o[1] + 1, 20, 0, 'hr');
+    A1();
+    if (f.rim) {                       // paws planted flat on the ground either side of the hole
+      R(2, 19, 6, 19, 0, 'b'); R(21, 19, 25, 19, 0, 'b');
+      R(2, 19, 2, 19, 0, 'bd'); R(25, 19, 25, 19, 0, 'bd');
+    }
+  }
+}
+
+// ---- More animations (built from overlays) -------------------------------
+const rect = (c0, r0, c1, r1, col, m = 'b') => [c0, r0, c1, r1, col, m];
+const px = (c, r, col, m = 'b') => [c, r, c, r, col, m];
+const step = (x, p, flip, extra = {}) => ({ x, flip, squash: p % 2, lift: p % 4 === 0 ? 'L' : p % 4 === 2 ? 'R' : null,
+  armL: p % 4 === 2 ? 'swing' : 'down', armR: p % 4 === 0 ? 'swing' : 'down', d: 110, ...extra });
+const SHADES = [rect(8, 8, 11, 9, 'k', 'f'), rect(16, 8, 19, 9, 'k', 'f'), rect(12, 8, 15, 8, 'k', 'f'),
+                px(9, 8, 'wf', 'f'), px(17, 8, 'wf', 'f')];
+const SUN = (cx, cy, p) => [
+  rect(cx - 1, cy - 2, cx + 1, cy + 2, 'su', 'w'), rect(cx - 2, cy - 1, cx + 2, cy + 1, 'su', 'w'),
+  ...(p % 2
+    ? [rect(cx, cy - 5, cx, cy - 4, 'sr', 'w'), rect(cx, cy + 4, cx, cy + 5, 'sr', 'w'),
+       rect(cx - 5, cy, cx - 4, cy, 'sr', 'w'), rect(cx + 4, cy, cx + 5, cy, 'sr', 'w')]
+    : [px(cx - 3, cy - 3, 'sr', 'w'), px(cx + 3, cy - 3, 'sr', 'w'), px(cx - 3, cy + 3, 'sr', 'w'), px(cx + 3, cy + 3, 'sr', 'w')]),
+];
+
+// build a dam: carry sticks onto a pile, then pat it down with the tail
+function damFrames() {
+  const L = [[20, 19, 31, 'wd'], [21, 18, 30, 'wl'], [22, 17, 29, 'wd'], [23, 16, 28, 'wl']];
+  const dam = n => L.slice(0, n).flatMap(([c0, r, c1, col]) =>
+    [rect(c0, r, c1, r, col, 'w'), px(c0, r, 'wk', 'w'), px(c1, r, 'wk', 'w')]);
+  const stick = [rect(17, 12, 26, 12, 'wd'), px(17, 12, 'wk'), px(26, 12, 'wk')];
+  const X = -6, fr = [];
+  for (let k = 0; k < 4; k++) fr.push(
+    { x:X, under:dam(k), over:stick, armL:'hold', armR:'hold', d:260 },
+    { x:X, under:dam(k), over:stick, armL:'mid', armR:'mid', dy:-1, d:160 },
+    { x:X, under:dam(k + 1), d:220 });
+  const done = dam(4);
+  fr.push(
+    { x:X, flip:1, under:done, d:220 },
+    { x:X, flip:1, under:done, tail:'up', d:180 },
+    { x:X, flip:1, under:done, tail:'flat', squash:1, dust:1, d:120 },
+    { x:X, flip:1, under:done, tail:'up', d:160 },
+    { x:X, flip:1, under:done, tail:'flat', squash:1, dust:2, d:120 },
+    { x:X, flip:1, under:done, eyes:'happy', blush:1, d:800 });
+  return fr;
+}
+
+// dance: hop side to side with music notes floating around
+function danceFrames() {
+  const note = (c, r) => [rect(c, r + 2, c + 1, r + 3, 'z', 'w'), rect(c + 1, r, c + 1, r + 2, 'z', 'w'), px(c + 2, r, 'z', 'w')];
+  return [0, 1, 2, 1, 0, -1, -2, -1].map((x, k) => ({
+    x, dy: k % 2 ? -1 : 0, flip: k < 4 ? 0 : 1, eyes:'happy', blush: k % 4 === 0 ? 1 : 0,
+    armL: k % 2 ? 'up' : 'mid', armR: k % 2 ? 'mid' : 'up', tail: k % 2 ? 'up' : 'rest',
+    lift: k % 2 ? (k % 4 === 1 ? 'L' : 'R') : null,
+    over: [...note(-6 + (k * 3) % 6, -4 + k % 3), ...note(27 - (k * 2) % 5, -2 - k % 4)], d:150 }));
+}
+
+// rainy day: leaf umbrella, then shake off the water
+function rainFrames() {
+  const LEAF = [rect(9, -5, 18, -5, 'gl'), rect(6, -4, 21, -4, 'ga'), rect(4, -3, 23, -3, 'ga'), px(4, -2, 'ga'), px(23, -2, 'ga'),
+                px(15, -2, 'gl'), px(16, -1, 'gl'), px(17, 0, 'gl'), px(18, 1, 'gl'), px(19, 2, 'gl'), px(20, 3, 'gl')];
+  const puddles = [rect(-6, 20, -2, 20, 'sw', 'w'), rect(27, 20, 32, 20, 'sw', 'w')];
+  const drops = p => {
+    const out = [];
+    for (let c = -7; c <= 34; c += 3) {
+      const r = ((c * 7 + p * 4) % 27 + 27) % 27 - 7;
+      if (r > 18 || (c >= 3 && c <= 24)) continue;           // nothing falls through the leaf
+      out.push(rect(c, r, c, r + 1, 'sw', 'w'));
+    }
+    return out;
+  };
+  const fr = [];
+  for (let p = 0; p < 12; p++) fr.push({ armR:'up', eyes: p % 5 === 4 ? 'closed' : 'open',
+    under:[...puddles, ...drops(p)], over:[...LEAF, ...(p % 2 ? [px(7, -6, 'wc'), px(19, -6, 'wc')] : [px(11, -6, 'wc'), px(22, -5, 'wc')])], d:130 });
+  fr.push({ armR:'up', under:puddles, over:LEAF, d:500 }, { armR:'mid', under:puddles, d:200 });
+  for (let k = 0; k < 4; k++) fr.push({ x: k % 2 ? 1 : -1, eyes:'closed', earsFlat:1, under:puddles,
+    over: k % 2 ? [px(2, 6, 'sw'), px(25, 9, 'sw'), px(3, 13, 'sw')] : [px(25, 5, 'sw'), px(2, 10, 'sw'), px(24, 14, 'sw'), px(1, 4, 'sw')], d:90 });
+  fr.push({ eyes:'happy', under:puddles, d:500 });
+  return fr;
+}
+
+// fishing: wait, bite, yank... a fish, then a boot
+function fishFrames() {
+  const X = -6;
+  const pond = p => [rect(19, 14, 35, 14, 'w1', 'w'), rect(18, 15, 35, 17, 'w2', 'w'), rect(19, 18, 35, 19, 'w3', 'w'),
+    rect(21, 20, 35, 20, 'w3', 'w'), ...[...Array(17)].map((_, k) => 19 + k).filter(c => (c + p) % 4 === 0).map(c => px(c, 13, 'wc', 'w'))];
+  const rod = pts => pts.map(([c, r]) => px(c, r, 'wk'));
+  const rodA = rod([[23, 5], [24, 4], [25, 3], [26, 2], [27, 1], [28, 0], [29, -1]]);
+  const rodB = rod([[23, 5], [24, 4], [25, 3], [26, 2], [27, 2], [28, 2], [29, 3]]);
+  const rodU = rod([[22, 4], [22, 3], [23, 2], [23, 1], [24, 0], [24, -1], [25, -2]]);
+  const float = fy => [rect(30, -1, 30, fy - 2, 'd'), px(30, fy - 1, 'wf'), px(30, fy, 'ce')];
+  const FISH = (c, r) => [rect(c, r, c + 2, r + 1, 'fs'), px(c + 3, r - 1, 'fs'), rect(c + 3, r, c + 3, r + 1, 'fs'), px(c + 3, r + 2, 'fs'), px(c, r, 'k')];
+  const BOOT = (c, r) => [rect(c, r, c + 1, r + 3, 'hk'), rect(c, r + 3, c + 3, r + 4, 'hk'), rect(c, r, c + 1, r, 'hr')];
+  const wait = p => ({ x:X, armR:'mid', under:pond(p), over:[...rodA, ...float(p % 2 ? 13 : 14)], d:320 });
+  const bite = p => ({ x:X, armR:'mid', eyes:'wide', under:pond(p), over:[...rodB, rect(30, 4, 30, 13, 'd'), px(30, 14, 'wf'),
+                       px(28, 14, 'wf'), px(32, 14, 'wf')], d:180 });
+  const yank = c => ({ x:X, armR:'up', dy:-1, eyes:'wide', under:pond(0), over:[...rodU, rect(26, -1, 26, 0, 'd'), ...c], d:250 });
+  return [
+    wait(0), wait(1), wait(2), wait(3), bite(0), bite(1), yank(FISH(25, 1)),
+    { x:X, armR:'up', eyes:'happy', blush:1, under:pond(1), over:[...rodU, rect(26, -1, 26, 0, 'd'), ...FISH(25, 1)], d:900 },
+    wait(0), wait(1), wait(2), bite(0), bite(1), yank(BOOT(25, 1)),
+    { x:X, armR:'up', eyes:'closed', earsFlat:1, under:pond(1), over:[...rodU, rect(26, -1, 26, 0, 'd'), ...BOOT(25, 1)], d:1000 },
+  ];
+}
+
+// scared: startle, shake, cover eyes, peek
+function scaredFrames() {
+  const bang = [rect(13, -6, 14, -3, 'ce'), rect(13, -1, 14, -1, 'ce')];
+  const cover = [rect(8, 7, 11, 10, 'bd'), rect(16, 7, 19, 10, 'bd')];
+  const fr = [{ d:500 },
+    { eyes:'wide', dy:-3, armL:'up', armR:'up', earsFlat:1, tail:'up', over:bang, d:220 },
+    { eyes:'wide', squash:1, earsFlat:1, armL:'mid', armR:'mid', over:bang, d:140 }];
+  for (let k = 0; k < 6; k++) fr.push({ x: k % 2 ? 1 : -1, eyes:'wide', earsFlat:1, armL:'mid', armR:'mid', sweat: k % 2 ? [19, 5] : [8, 6], d:70 });
+  fr.push({ earsFlat:1, armL:'none', armR:'none', over:cover, d:700 },
+          { earsFlat:1, armL:'none', armR:'none', eyes:'wide', over:[cover[0]], d:400 },   // peeks with one eye
+          { earsFlat:1, armL:'none', armR:'none', over:cover, d:500 },
+          { d:300 }, { eyes:'happy', d:500 });
+  return fr;
+}
+
+// sneeze: ah... ah... ACHOO
+function sneezeFrames() {
+  const spray1 = [px(12, 12, 'sw'), px(15, 12, 'sw'), px(11, 14, 'sw'), px(16, 14, 'sw'), px(13, 13, 'sw')];
+  const spray2 = [px(10, 15, 'sw'), px(17, 16, 'sw'), px(8, 17, 'sw'), px(19, 18, 'sw'), px(13, 16, 'sw'), px(14, 18, 'sw')];
+  return [{ d:400 },
+    { nose:1, eyes:'closed', dy:-1, d:300 },
+    { nose:1, eyes:'closed', dy:-2, armL:'mid', armR:'mid', d:300 },
+    { nose:1, eyes:'closed', dy:-3, armL:'up', armR:'up', tail:'up', d:450 },
+    { squash:1, eyes:'closed', earsFlat:1, tail:'flat', dust:1, over:spray1, d:140 },
+    { squash:1, eyes:'closed', earsFlat:1, dust:2, over:spray2, d:180 },
+    { d:300 }, { nose:1, d:150 }, { d:150 }, { nose:1, d:150 }, { eyes:'happy', d:600 }];
+}
+
+// brushing teeth: scrub scrub, foam, sparkle grin
+function brushFrames() {
+  const brush = s => [rect(15 + s, 11, 21, 11, 'cb'), rect(13 + s, 10, 14 + s, 11, 'sw')];
+  const foam = k => [[12, 10], [15, 12], [12, 12], [16, 10], [11, 11]].filter((_, j) => (j + k) % 2 === 0).map(([c, r]) => px(c, r, 'wf'));
+  const sparkle = [px(16, 11, 'wf'), px(15, 11, 'wf'), px(17, 11, 'wf'), px(16, 10, 'wf'), px(16, 12, 'wf')];
+  const fr = [];
+  for (let k = 0; k < 10; k++) fr.push({ armR:'hold', eyes: k % 4 === 3 ? 'closed' : 'open', over:[...brush(k % 2), ...foam(k)], d:110 });
+  fr.push({ armR:'mid', eyes:'closed', d:300 }, { eyes:'happy', over:sparkle, d:300 },
+          { eyes:'happy', over:[px(16, 11, 'wf')], d:200 }, { eyes:'happy', over:sparkle, d:500 }, { d:300 });
+  return fr;
+}
+
+// carry acorns: walk over, pick one up, carry it back, toss it in the basket (x3)
+function carryFrames() {
+  const basket = n => [rect(-7, 17, -2, 19, 'wd', 'w'), rect(-7, 17, -2, 17, 'wk', 'w'), px(-5, 18, 'wk', 'w'), px(-3, 18, 'wk', 'w'),
+    ...[[-6, 16], [-4, 16], [-5, 15]].slice(0, n).map(([c, r]) => rect(c, r, c + 1, r, 'hr', 'w'))];
+  const acornW = (c, r) => [rect(c, r, c + 1, r, 'hr', 'w'), rect(c, r + 1, c + 1, r + 2, 'wd', 'w')];
+  const acornB = [rect(13, 12, 14, 12, 'hr'), rect(13, 13, 14, 14, 'wd')];
+  const fr = [];
+  for (let n = 0; n < 3; n++) {
+    const ground = acornW(26, 17);
+    for (let x = -2, p = 0; x <= 3; x++, p++) fr.push(step(x, p, 0, { under:[...basket(n), ...ground] }));
+    fr.push({ x:3, squash:1, armL:'hold', armR:'hold', under:[...basket(n), ...ground], d:220 },
+            { x:3, armL:'hold', armR:'hold', eyes:'happy', under:basket(n), over:acornB, d:220 });
+    for (let x = 3, p = 0; x >= -2; x--, p++) fr.push(step(x, p, 1, { under:basket(n), over:acornB, armL:'hold', armR:'hold' }));
+    [[7, 8], [3, 8], [0, 10], [-3, 12], [-5, 14]].forEach(([c, r], k) => fr.push({ x:-2, flip:1,
+      armL: k < 2 ? 'up' : 'down', armR: k < 2 ? 'up' : 'down', under:basket(n), over:acornW(c, r), d:100 }));
+    fr.push({ x:-2, flip:1, eyes:'happy', under:basket(n + 1), d:350 });
+  }
+  return fr;
+}
+
+// dizzy: spin spin spin, X eyes, stars, plop down
+function dizzyFrames() {
+  const star = (c, r) => [px(c, r, 'hy'), px(c - 1, r, 'hy'), px(c + 1, r, 'hy'), px(c, r - 1, 'hy'), px(c, r + 1, 'hy')];
+  const stars = k => (k % 2 ? [[9, -3], [18, -3], [13, -5]] : [[7, -4], [13, -2], [19, -5]]).flatMap(([c, r]) => star(c, r));
+  const fr = [];
+  for (let k = 0; k < 8; k++) fr.push({ flip: k % 2, x: k % 4 < 2 ? 0 : 1, armL:'mid', armR:'mid', tail:'up', eyes:'wide', d:80 });
+  [[1, 'L'], [-1, 'R'], [2, 'L'], [0, null]].forEach(([x, lift], k) => fr.push({ x, lift, eyes:'dizzy',
+    armL: k % 2 ? 'mid' : 'down', armR: k % 2 ? 'down' : 'mid', over:stars(k), d:220 }));
+  for (let k = 0; k < 4; k++) fr.push({ dy:1, squash:1, eyes:'dizzy', over:stars(k), d:280 });
+  fr.push({ eyes:'closed', d:300 }, { eyes:'closed', x:1, d:120 }, { eyes:'closed', x:-1, d:120 }, { d:500 });
+  return fr;
+}
+
+// sunbathing on a beach towel with shades and a drink
+function sunbatheFrames() {
+  const sand = [rect(-8, 20, 35, 22, 'sd', 'w'), px(-4, 21, 'hd', 'w'), px(5, 22, 'hd', 'w'), px(29, 21, 'hd', 'w')];
+  const towel = [rect(-1, 20, 24, 20, 'ce', 'w'), ...[0, 4, 8, 12, 16, 20, 24].map(c => px(c, 20, 'wf', 'w'))];
+  const drink = [rect(28, 16, 30, 19, 'gs', 'w'), rect(28, 16, 30, 16, 'hy', 'w'), rect(30, 13, 30, 15, 'ce', 'w'), px(31, 13, 'ce', 'w')];
+  const fr = [];
+  for (let k = 0; k < 8; k++) fr.push({ armL:'up', armR:'up', squash: k % 2, blush: k >= 6 ? 1 : 0, tail: k === 5 ? 'up' : 'rest',
+    under:[...sand, ...towel, ...drink, ...SUN(30, -2, k)], over: k % 4 === 1 ? [...SHADES, px(10, 8, 'wf', 'f')] : SHADES, d:450 });
+  return fr;
+}
+
+// sunny day: sun rises, squint, shade eyes, put on sunglasses, look cool
+function sunnyFrames() {
+  const fr = [];
+  [8, 5, 2, -2].forEach((cy, k) => fr.push({ under:SUN(30, cy, k), d:260 }));
+  fr.push({ eyes:'closed', under:SUN(30, -2, 0), d:300 },
+          { eyes:'closed', armR:'up', under:SUN(30, -2, 1), over:[rect(15, 6, 20, 7, 'bd')], d:500 },
+          { eyes:'closed', armR:'up', under:SUN(30, -2, 0), over:[rect(21, 2, 22, 3, 'k'), rect(24, 2, 25, 3, 'k'), px(23, 2, 'k')], d:300 },
+          { armR:'mid', under:SUN(30, -2, 1), over:SHADES, d:300 });
+  for (let k = 0; k < 6; k++) fr.push({ under:SUN(30, -2, k), over:[...SHADES, ...(k % 3 === 0 ? [px(10, 8, 'wf', 'f'), px(18, 8, 'wf', 'f')] : [])],
+    armR: k % 2 ? 'mid' : 'down', tail: k % 2 ? 'up' : 'rest', d:300 });
+  return fr;
+}
+
+// really angry: red face, angry brows, stomping, steam from the ears
+function angryFrames() {
+  const vein = [px(15, 4, 'ce'), px(16, 4, 'ce'), px(15, 5, 'ce'), px(18, 4, 'ce'), px(19, 4, 'ce'), px(19, 5, 'ce')];
+  const steam = k => [[9, -2 - k % 3], [18, -3 - (k + 1) % 3], [10, -5 - k % 2], [17, -6 + k % 2]].map(([c, r]) => rect(c, r, c + 1, r, 'd'));
+  const fr = [];
+  for (let k = 0; k < 8; k++) fr.push({ bodyCol:'ba', eyes:'angry', teeth: k % 2 ? 'in' : 'out',
+    lift: k % 2 ? null : (k % 4 === 0 ? 'L' : 'R'), squash: k % 2, armL: k % 2 ? 'up' : 'mid', armR: k % 2 ? 'mid' : 'up',
+    tail: k % 4 === 2 ? 'flat' : k % 4 === 1 ? 'up' : 'rest', dust: k % 4 === 2 ? 1 : 0, over:[...vein, ...steam(k)], d:120 });
+  fr.push({ bodyCol:'ba', eyes:'angry', armL:'hold', armR:'hold', over:[...vein, ...steam(0)], d:500 });
+  return fr;
+}
+
+// really sad: droopy ears, slumped, a tear, and a little rain cloud
+function sadFrames() {
+  const cloud = [rect(10, -7, 13, -7, 'cl'), rect(15, -8, 18, -7, 'cl'), rect(8, -6, 20, -4, 'cl')];
+  const drops = k => [[9, -2], [12, 0], [15, -1], [18, 1]].map(([c, r]) => px(c, r + k % 3, 'sw'));
+  const tear = [[10, 10], [10, 12], [10, 14], [10, 16], null, null];
+  return tear.map((t, k) => ({ eyes:'sad', earsFlat:1, squash:1, nose: k === 3 ? 1 : 0,
+    over:[...cloud, ...drops(k), ...(t ? [px(t[0], t[1], 'sw')] : [])], d:420 }));
+}
+
+// bedtime: nightcap on, plushie in bed, hop in, tuck in, sleep
+function bedFrames() {
+  const CAP = [rect(9, 3, 18, 4, 'nw'), ...[10, 11, 12, 13, 14, 15, 16, 17].map(c => rect(c, 0, c, 2, c % 2 ? 'nb' : 'nw')),
+    ...[11, 12, 13, 14, 15, 16].map(c => px(c, -1, c % 2 ? 'nb' : 'nw')),
+    px(10, -2, 'nb'), px(9, -2, 'nw'), px(8, -1, 'nb'), px(7, -1, 'nw'), px(6, 0, 'nb'), px(5, 1, 'nw'), px(5, 2, 'nb'),
+    rect(4, 3, 5, 4, 'nw'), px(5, 4, 'gs')];                                 // striped cap, white cuff, pompom
+  const PLUSH_HELD = [rect(11, 11, 15, 14, 'pl'), px(11, 10, 'pl'), px(15, 10, 'pl'), px(12, 12, 'k'), px(14, 12, 'k'), px(13, 13, 'hr')];
+  const plushW = (c, r) => [rect(c, r, c + 4, r + 3, 'pl', 'w'), px(c, r - 1, 'pl', 'w'), px(c + 4, r - 1, 'pl', 'w'),
+                            px(c + 1, r + 1, 'k', 'w'), px(c + 3, r + 1, 'k', 'w'), px(c + 2, r + 2, 'hr', 'w')];
+  const BED = [rect(14, 4, 35, 5, 'wk', 'w'), rect(15, 6, 34, 19, 'wd', 'w'), rect(15, 6, 34, 8, 'nw', 'w'), rect(15, 8, 34, 8, 'gs', 'w')];
+  const blanket = bt => [rect(14, bt, 35, 19, 'qb', 'w'), rect(14, bt, 35, bt, 'nw', 'w'),
+    ...[17, 23, 29].filter(() => bt + 3 <= 19).map(c => rect(c, bt + 2, c + 1, bt + 3, 'gs', 'w')),
+    rect(14, 20, 15, 20, 'wk', 'w'), rect(34, 20, 35, 20, 'wk', 'w')];
+  const paws = bt => [rect(9, bt - 1, 11, bt, 'b'), rect(16, bt - 1, 18, bt, 'b')];
+  const MOON = [rect(-7, -5, -7, -3, 'hy', 'w'), rect(-6, -6, -6, -2, 'hy', 'w'), px(-5, -6, 'hy', 'w'), px(-5, -2, 'hy', 'w'),
+                px(-1, -6, 'sr', 'w'), px(4, -4, 'sr', 'w'), px(9, -7, 'sr', 'w')];
+  const inBed = { x:11, armL:'none', armR:'none', tail:'up' };
+  const fr = [
+    { x:-8, armL:'hold', armR:'hold', under:BED, over:[...blanket(17), ...CAP, ...PLUSH_HELD], d:700 },
+    { x:-8, armL:'mid', armR:'mid', under:BED, over:[...blanket(17), ...CAP, ...plushW(10, 6)], d:150 },
+    { x:-8, under:BED, over:[...plushW(14, 10), ...blanket(17), ...CAP], d:400 },               // plushie lands in bed
+    { x:-8, armL:'up', armR:'up', eyes:'closed', under:BED, over:[...plushW(14, 10), ...blanket(17), ...CAP], d:700 },   // big stretch
+    ...[[-5, -3], [-1, -6], [4, -6], [8, -3]].map(([x, dy]) => ({ x, dy, tail:'up', armL:'up', armR:'up',
+      under:BED, over:[...plushW(14, 10), ...blanket(17), ...CAP], d:140 })),
+    { ...inBed, squash:1, under:BED, over:[...plushW(14, 10), ...blanket(17), ...CAP], d:220 },
+    { ...inBed, under:BED, over:[...plushW(14, 9), ...blanket(17), ...paws(17), ...CAP], d:250 },
+    { ...inBed, under:BED, over:[...plushW(14, 9), ...blanket(15), ...paws(15), ...CAP], d:250 },
+    { ...inBed, under:BED, over:[...plushW(14, 9), ...blanket(13), ...paws(13), ...CAP], d:300 },
+    { ...inBed, eyes:'happy', blush:1, under:BED, over:[...plushW(14, 9), ...blanket(13), ...paws(13), ...CAP], d:800 },
+  ];
+  fr.loop = fr.length;                                        // from here on it just sleeps
+  [[[20, -1]], [[20, -4]], [[20, -7]], []].forEach((zs, k) => fr.push({ ...inBed, eyes:'closed', squash: k % 2, zs,
+    under:[...BED, ...MOON], over:[...plushW(14, 9), ...blanket(13), ...paws(13), ...CAP], d:650 }));
+  return fr;
+}
+
+// ---- Everyday-life animations ---------------------------------------------
+const box = (c0, r0, c1, r1, col, m = 'b') =>
+  [rect(c0, r0, c1, r0, col, m), rect(c0, r1, c1, r1, col, m), rect(c0, r0, c0, r1, col, m), rect(c1, r0, c1, r1, col, m)];
+const CHEF_HAT = (() => {
+  const OUT  = [[-7, 12, 15], [-6, 8, 19], [-5, 7, 20], [-4, 6, 21], [-3, 6, 21], [-2, 6, 21], [-1, 6, 21], [0, 7, 20], [1, 9, 18], [2, 9, 18], [3, 9, 18]];
+  const FILL = [[-6, 12, 15], [-5, 8, 19], [-4, 7, 20], [-3, 7, 20], [-2, 7, 20], [-1, 7, 20], [0, 8, 19], [1, 10, 17], [2, 10, 17], [3, 10, 17]];
+  return [...OUT.map(([r, a, b]) => rect(a, r, b, r, 'cl')), ...FILL.map(([r, a, b]) => rect(a, r, b, r, 'nw')),
+          px(11, -5, 'tl'), px(16, -5, 'tl'), px(11, -4, 'tl'), px(16, -4, 'tl'),       // creases between the puffs
+          rect(8, -1, 19, -1, 'tl'), rect(17, -4, 19, -2, 'tl'),                         // soft shading
+          px(12, 1, 'tl'), px(12, 2, 'tl'), px(15, 1, 'tl'), px(15, 2, 'tl'),            // band pleats
+          rect(10, 3, 17, 3, 'cl')];
+})();
+const GLASSES = [...box(7, 7, 12, 10, 'k', 'f'), rect(8, 8, 11, 9, 'gs', 'f'), rect(9, 8, 10, 9, 'k', 'f'),     // nerd glasses: frames,
+                 ...box(15, 7, 20, 10, 'k', 'f'), rect(16, 8, 19, 9, 'gs', 'f'), rect(17, 8, 18, 9, 'k', 'f'),   // pale lenses, eyes
+                 rect(13, 8, 14, 8, 'k', 'f')];
+
+// shower: water pouring, soapy head, rubber duck
+function showerFrames() {
+  const fix = [rect(-1, -6, 28, -6, 'cr', 'w'), rect(-1, -5, 1, 19, 'qb', 'w'), rect(0, -5, 0, 19, 'nb', 'w'),
+               rect(13, -5, 14, -4, 'cr', 'w'), rect(10, -3, 17, -3, 'cr', 'w'), rect(2, 20, 25, 20, 'tl', 'w')];
+  const duck = [rect(21, 18, 24, 19, 'hy', 'w'), rect(23, 16, 24, 17, 'hy', 'w'), px(24, 16, 'k', 'w'), px(25, 17, 'fl', 'w')];
+  const stream = p => {
+    const out = [];
+    // drops 8 rows apart falling 2 rows a frame (a smaller gap than the step made them look like they rose)
+    for (const c of [10, 12, 14, 16]) for (let j = 0; j < 3; j++) {
+      const r = -2 + (p * 2 + c * 3 + j * 8) % 24;
+      if (r <= 19) out.push(rect(c, r, c, r + 1, 'sw', 'w'));
+    }
+    return out;
+  };
+  const foam = p => [[9, 4], [12, 3], [15, 4], [18, 4], [11, 5], [16, 5], [13, 3], [14, 4]]
+    .filter((_, j) => (j + p) % 3).map(([c, r]) => px(c, r, 'wf'));
+  const bubbles = p => [[3, 8 - p % 4], [24, 6 - (p + 2) % 4], [22, 12 - p % 3]].map(([c, r]) => px(c, r, 'gs'));
+  return [...Array(8)].map((_, p) => ({ armL: p % 2 ? 'up' : 'mid', armR: p % 2 ? 'mid' : 'up', eyes: p % 4 === 3 ? 'happy' : 'closed',
+    tail: p % 4 < 2 ? 'rest' : 'up', under:[...fix, ...duck], over:[...foam(p), ...bubbles(p), ...stream(p)], d:120 }));
+}
+
+// cooking: sizzle an egg in a pan, flip it, chef hat on
+function cookFrames() {
+  const X = -6;
+  const stove = [rect(18, 13, 34, 19, 'sv', 'w'), rect(17, 12, 35, 12, 'cl', 'w'), rect(19, 14, 33, 14, 'cl', 'w'),
+                 px(21, 16, 'cr', 'w'), px(25, 16, 'cr', 'w'), px(29, 16, 'cr', 'w')];
+  const flames = p => [21, 23, 25, 27].map((c, j) => px(c, 11, (p + j) % 2 ? 'fl' : 'su', 'w'));
+  const pan = (dy, jig = 0) => [rect(20 + jig, 9 + dy, 28 + jig, 10 + dy, 'pn', 'w'), rect(16, 10 + dy, 19 + jig, 10 + dy, 'pn', 'w')];
+  const egg = r => [rect(22, r, 25, r, 'nw', 'w'), rect(23, r, 24, r, 'hy', 'w')];
+  const steam = p => [[23, 6 - p % 3], [26, 4 - (p + 1) % 3]].map(([c, r]) => px(c, r, 'd', 'w'));
+  const fr = [];
+  for (let p = 0; p < 4; p++) fr.push({ x:X, armR:'hold', under:stove, over:[...pan(0, p % 2), ...egg(8), ...flames(p), ...steam(p), ...CHEF_HAT], d:140 });
+  fr.push({ x:X, armR:'mid', dy:-1, eyes:'wide', under:stove, over:[...pan(-2), ...egg(4), ...flames(0), ...CHEF_HAT], d:120 },
+          { x:X, armR:'mid', eyes:'wide', under:stove, over:[...pan(-1), ...egg(0), ...flames(1), ...CHEF_HAT], d:160 },
+          { x:X, armR:'mid', eyes:'wide', under:stove, over:[...pan(-1), ...egg(4), ...flames(0), ...CHEF_HAT], d:120 },
+          { x:X, armR:'hold', squash:1, under:stove, over:[...pan(0), ...egg(8), ...flames(1), ...CHEF_HAT], d:160 });
+  for (let p = 0; p < 4; p++) fr.push({ x:X, armR:'hold', eyes:'happy', blush:1, under:stove, over:[...pan(0, p % 2), ...egg(8), ...flames(p), ...steam(p), ...CHEF_HAT], d:160 });
+  return fr;
+}
+
+// baking: mix batter, bake it in the oven, ding, proud cake
+function bakeFrames() {
+  const X = -6;
+  const oven = (glow, cake) => [rect(19, 7, 34, 19, 'ov', 'w'), rect(19, 7, 34, 7, 'cl', 'w'), rect(21, 9, 32, 9, 'cr', 'w'),
+    px(23, 8, 'k', 'w'), px(30, 8, 'k', 'w'), rect(21, 11, 32, 16, glow ? (glow === 1 ? 'fl' : 'su') : 'sv', 'w'), ...cake];
+  const bowl = [rect(10, 12, 17, 14, 'cl'), rect(10, 12, 17, 12, 'dg'), rect(11, 15, 16, 15, 'cl')];
+  const spoon = p => { const [c, r] = [[12, 9], [15, 9], [15, 10], [12, 10]][p % 4]; return [rect(c, r, c, r + 2, 'wk')]; };
+  const cakeIn = (h, col) => [rect(24, 16 - h, 29, 16, col, 'w')];
+  const CAKE = [rect(9, 10, 18, 13, 'wd'), rect(9, 9, 18, 9, 'pl'), px(10, 10, 'pl'), px(13, 10, 'pl'), px(16, 10, 'pl'), rect(13, 8, 14, 8, 'ce')];
+  const bang = [rect(26, 0, 27, 3, 'ce', 'w'), rect(26, 5, 27, 5, 'ce', 'w')];
+  const fr = [];
+  for (let p = 0; p < 6; p++) fr.push({ x:X, armL:'hold', armR:'hold', eyes: p % 3 === 2 ? 'happy' : 'open',
+    under:oven(0, []), over:[...bowl, ...spoon(p), ...CHEF_HAT], d:150 });
+  fr.push({ x:X, armL:'mid', armR:'mid', under:oven(0, cakeIn(1, 'dg')), over:CHEF_HAT, d:350 });
+  for (let p = 0; p < 6; p++) fr.push({ x:X, lift: p % 2 ? 'L' : null, eyes: p === 3 ? 'closed' : 'open',
+    under:oven(1 + p % 2, cakeIn(1 + (p >> 1), p < 4 ? 'dg' : 'wd')), over:CHEF_HAT, d:300 });
+  fr.push({ x:X, eyes:'wide', dy:-1, under:oven(0, cakeIn(3, 'wd')), over:[...bang, ...CHEF_HAT], d:350 },
+          { x:X, armL:'hold', armR:'hold', eyes:'happy', blush:1, under:oven(0, []),
+            over:[...CAKE, ...CHEF_HAT, px(21, 6, 'hy'), px(6, 7, 'hy')], d:1000 });
+  return fr;
+}
+
+// celebrating: party hat, confetti, balloons, jumping for joy
+function celebrateFrames() {
+  const HAT = [[3, 10, 17], [2, 11, 16], [1, 11, 16], [0, 12, 15], [-1, 12, 15], [-2, 13, 14], [-3, 13, 14]]
+    .map(([r, c0, c1], k) => rect(c0, r, c1, r, k % 2 ? 'hy' : 'ce')).concat([rect(13, -5, 14, -4, 'cb')]);
+  const COLS5 = ['ce', 'cb', 'hy', 'ga', 'pl'];
+  const confetti = p => [...Array(16)].map((_, j) => {
+    const c = (j * 7 + 3) % 42 - 7, r = (j * 5 + p * 2) % 28 - 7;
+    return rect(c, r, c + j % 2, r, COLS5[j % 5], 'w');
+  });
+  const balloon = (c, r, col) => [rect(c, r, c + 2, r + 3, col, 'w'), px(c + 1, r + 4, col, 'w'), rect(c + 1, r + 5, c + 1, r + 12, 'd', 'w'), px(c, r, 'wf', 'w')];
+  const dys = [0, -2, -3, -2, 0, -2, -3, -2];
+  return dys.map((dy, p) => ({ dy, eyes:'happy', blush:1, armL: p % 2 ? 'up' : 'mid', armR: p % 2 ? 'mid' : 'up', tail: p % 2 ? 'up' : 'rest',
+    squash: dy === 0 ? 1 : 0, dust: dy === 0 ? 1 : 0,
+    under:[...balloon(-6, -2 + p % 2, 'ce'), ...balloon(28, -4 + (p + 1) % 2, 'cb'), ...balloon(31, 0 + p % 2, 'hy')],
+    over:[...HAT, ...confetti(p)], d:130 }));
+}
+
+// toilet: sitting on the seat, a bit of effort, plop, relief, flush
+function toiletFrames() {
+  // tank sits low behind his shoulders (his head pops out above it), lid on top, flush handle on the left
+  const TANK = [rect(2, 2, 25, 10, 'cl', 'w'), rect(3, 4, 24, 9, 'nw', 'w'), rect(3, 9, 24, 9, 'tl', 'w'),
+                rect(1, 1, 26, 3, 'cl', 'w'), rect(2, 2, 25, 2, 'nw', 'w'), rect(0, 5, 2, 5, 'cr', 'w')];
+  const ROLL = [rect(-7, 8, -4, 11, 'cl', 'w'), rect(-6, 9, -4, 10, 'nw', 'w'), rect(-8, 9, -8, 10, 'cr', 'w'), rect(-5, 12, -5, 14, 'nw', 'w')];
+  // seat rim he sits in, then a rounded bowl narrowing to a foot (outline first, white fill on top)
+  const OUT  = [[10, 1, 26], [11, 0, 27], [12, 0, 27], [13, 0, 27], [14, 1, 26], [15, 2, 25], [16, 4, 23], [17, 6, 21], [18, 7, 20], [19, 6, 21], [20, 5, 22]];
+  const FILL = [[11, 1, 26], [12, 1, 26], [14, 2, 25], [15, 3, 24], [16, 5, 22], [17, 7, 20], [18, 8, 19], [19, 7, 20]];
+  const BOWL = [...OUT.map(([r, a, b]) => rect(a, r, b, r, 'cl', 'w')), ...FILL.map(([r, a, b]) => rect(a, r, b, r, 'nw', 'w')),
+                rect(1, 12, 26, 12, 'tl', 'w'), rect(19, 14, 24, 15, 'tl', 'w'), rect(17, 16, 21, 16, 'tl', 'w')];  // shading
+  const BACK = [...TANK, ...BOWL];                  // whole toilet sits behind him: he rests ON the seat
+  const splash = [px(-1, 10, 'sw', 'w'), px(28, 10, 'sw', 'w'), px(-2, 8, 'sw', 'w'), px(29, 8, 'sw', 'w')];
+  const stink = p => [[8, -7], [18, -7], [13, -6]].flatMap(([c, r], j) =>
+    [px(c + (p + j) % 2, r, 'ga', 'w'), px(c + (p + j + 1) % 2, r + 1, 'ga', 'w'), px(c + (p + j) % 2, r + 2, 'ga', 'w')]);
+  const swirl = p => [[-2, 13 + p % 2], [29, 14 - p % 2], [-1, 16 - p % 2], [28, 16 + p % 2]].map(([c, r], j) => px(c, r, j % 2 ? 'sw' : 'wc', 'w'));
+  const seat = { dy:-4, tail:'none', noShadow:1, sit:1 };                           // raised onto the seat, legs dangling
+  const sit = { ...seat, under:[...BACK, ...ROLL] };                              // just sitting, nothing on
+  return [
+    { ...sit, over:[], d:500 },
+    { ...sit, eyes:'closed', over:[], d:150 },
+    { ...sit, over:[], d:500 },
+    { ...sit, eyes:'closed', squash:1, blush:1, sweat:[19, 6], over:[], d:500 },
+    { ...sit, eyes:'closed', squash:1, blush:1, sweat:[20, 8], over:[], d:500 },
+    { ...sit, eyes:'wide', over:[...splash], d:250 },                       // plop!
+    { ...sit, eyes:'happy', over:[], d:400 },
+    { ...sit, eyes:'happy', under:[...BACK, ...ROLL, ...stink(0)], over:[], d:350 },
+    { ...sit, eyes:'happy', under:[...BACK, ...ROLL, ...stink(1)], over:[], d:350 },
+    { ...seat, armL:'mid', under:[...BACK, ...ROLL], over:[], d:300 },                        // reaches the flush handle
+    { ...seat, armL:'down', under:[...BACK, ...ROLL], over:[...swirl(0)], d:180 },
+    { ...seat, under:[...BACK, ...ROLL], over:[...swirl(1)], d:180 },
+    { ...seat, eyes:'happy', under:[...BACK, ...ROLL], over:[], d:500 },
+  ];
+}
+
+// washing hands: tap on, scrub with bubbles, tap off, shake dry
+function handsFrames() {
+  const SINK = [rect(3, 12, 24, 14, 'cl', 'w'), rect(4, 12, 23, 13, 'nw', 'w'), rect(11, 15, 16, 20, 'cl', 'w'), rect(12, 15, 15, 20, 'nw', 'w'), rect(21, 11, 22, 11, 'pl', 'w')];
+  const TAP = [rect(13, 8, 14, 11, 'cr', 'w'), rect(13, 8, 16, 8, 'cr', 'w'), px(13, 7, 'cr', 'w')];
+  const water = p => [rect(16, 9, 16, 11, 'sw', 'w'), px(16, 9 + p % 3, 'wc', 'w')];
+  const bubbles = p => [[8, 11 - p % 2], [19, 10 + p % 2], [11, 9 + p % 3], [17, 8 + (p + 1) % 3], [9, 7 + p % 2]].map(([c, r]) => px(c, r, (c + p) % 2 ? 'wf' : 'gs', 'w'));
+  const fr = [];
+  for (let p = 0; p < 8; p++) fr.push({ armL: p % 2 ? 10 : 11, armR: p % 2 ? 11 : 10, eyes: p % 4 === 3 ? 'happy' : 'open',
+    over:[...TAP, ...water(p), ...bubbles(p), ...SINK], d:120 });
+  fr.push({ armL:'hold', armR:'hold', over:[...TAP, ...SINK], d:300 });
+  for (let p = 0; p < 4; p++) fr.push({ armL:'mid', armR:'mid', x: p % 2 ? 1 : -1, eyes:'closed', over:[...TAP, ...SINK,
+    ...(p % 2 ? [px(2, 5, 'sw'), px(25, 7, 'sw'), px(3, 9, 'sw')] : [px(25, 4, 'sw'), px(1, 7, 'sw'), px(24, 9, 'sw')])], d:90 });
+  fr.push({ armL:'up', armR:'up', eyes:'happy', over:[...TAP, ...SINK, px(5, 2, 'hy'), px(22, 2, 'hy'), px(4, 3, 'hy'), px(23, 3, 'hy')], d:700 });
+  return fr;
+}
+
+// washing dishes: scrub three plates and stack them in the rack
+function dishesFrames() {
+  const COUNTER = [rect(-3, 13, 30, 13, 'wk', 'w'), rect(-3, 14, 30, 19, 'wd', 'w'), rect(13, 15, 13, 19, 'wk', 'w'),
+                   rect(4, 13, 23, 14, 'w1', 'w'), px(6, 12, 'wf', 'w'), px(9, 12, 'wf', 'w'), px(18, 12, 'wf', 'w'), px(21, 12, 'wf', 'w')];
+  const rack = n => [rect(25, 12, 34, 12, 'cr', 'w'), px(25, 10, 'cr', 'w'), px(34, 10, 'cr', 'w'),
+    ...[...Array(n)].flatMap((_, k) => [rect(27 + 3 * k, 6, 27 + 3 * k, 11, 'nw', 'w'), rect(28 + 3 * k, 6, 28 + 3 * k, 11, 'cl', 'w')])];
+  const plate = dirty => [rect(11, 8, 16, 13, 'cl'), rect(12, 9, 15, 12, 'nw'), ...(dirty ? [px(13, 10, 'hr'), px(14, 11, 'hr')] : [])];
+  const sponge = p => { const [c, r] = [[11, 8], [15, 9], [15, 12], [11, 12]][p % 4]; return [rect(c, r, c + 1, r + 1, 'hy')]; };
+  const suds = p => [[10, 7 - p % 2], [17, 6 + p % 2], [12, 6]].map(([c, r]) => px(c, r, 'wf'));
+  const fr = [];
+  for (let n = 0; n < 3; n++) {
+    for (let p = 0; p < 5; p++) fr.push({ armL:'hold', armR:'hold', under:rack(n), over:[...COUNTER, ...plate(p < 3), ...sponge(p), ...suds(p)], d:140 });
+    fr.push({ armL:'hold', armR:'hold', eyes:'happy', under:rack(n), over:[...COUNTER, ...plate(false), px(12, 14, 'sw'), px(15, 15, 'sw')], d:250 },
+            { armR:'mid', under:rack(n), over:[...COUNTER, rect(22, 5, 22, 10, 'nw'), rect(23, 5, 23, 10, 'cl')], d:220 },
+            { under:rack(n + 1), over:COUNTER, d:250 });
+  }
+  fr.push({ eyes:'happy', blush:1, under:rack(3), over:COUNTER, d:700 });
+  return fr;
+}
+
+// coding: glasses on, typing lines of code on a monitor, then a green check
+function codeFrames() {
+  const X = -4;
+  const DESK = [rect(-6, 14, 35, 14, 'wk', 'w'), rect(-6, 15, 35, 19, 'wd', 'w'), rect(-4, 17, 8, 17, 'wk', 'w')];
+  const MON = [rect(19, 1, 34, 10, 'sv', 'w'), rect(20, 2, 33, 9, 'sc', 'w'), rect(26, 11, 27, 13, 'cl', 'w'), rect(24, 13, 29, 13, 'cl', 'w')];
+  const KEYS = [rect(5, 13, 15, 13, 'cl', 'w'), px(6, 13, 'nw', 'w'), px(9, 13, 'nw', 'w'), px(12, 13, 'nw', 'w')];
+  const MUG = [rect(-2, 11, 0, 13, 'ce', 'w'), px(1, 12, 'ce', 'w')];
+  const LINES = [[21, 3, 'cg', 5], [23, 4, 'cb', 8], [23, 5, 'hy', 5], [25, 6, 'pl', 6], [23, 7, 'cb', 4], [21, 8, 'cg', 3]];
+  const code = (n, part) => LINES.slice(0, n + 1).flatMap(([c, r, col, len], k) => {
+    const L = k === n ? Math.max(1, Math.round(len * part)) : len;
+    return [rect(c, r, c + L - 1, r, col, 'w'), ...(k === n ? [px(c + L + 1, r, 'nw', 'w')] : [])];
+  });
+  const steam = p => [px(-1, 9 - p % 2, 'd', 'w'), px(0, 8 - (p + 1) % 2, 'd', 'w')];
+  const fr = [];
+  for (let k = 0; k < 12; k++) fr.push({ x:X, armL: k % 2 ? 10 : 11, armR: k % 2 ? 11 : 10, eyes: k === 7 ? 'closed' : 'open',
+    under:[...MON, ...code(k >> 1, (k % 2 + 1) / 2), ...steam(k)], over:[...DESK, ...KEYS, ...MUG, ...GLASSES], d:130 });
+  const check = [[23, 6], [24, 7], [25, 8], [26, 7], [27, 6], [28, 5], [29, 4], [30, 3]].flatMap(([c, r]) => [px(c, r, 'cg', 'w'), px(c, r + 1, 'cg', 'w')]);
+  fr.push({ x:X, armL:'up', armR:'up', eyes:'happy', blush:1, under:[...MON, ...check], over:[...DESK, ...KEYS, ...MUG, ...GLASSES], d:500 },
+          { x:X, eyes:'happy', under:[...MON, ...check], over:[...DESK, ...KEYS, ...MUG, ...GLASSES], d:700 });
+  return fr;
+}
+
+// hackerman: dark room, matrix rain, hoodie and shades, furious typing, ACCESS GRANTED
+function hackFrames() {
+  const X = -4;
+  const ROOM = [rect(-8, -7, 35, 22, 'hx', 'w')];
+  const matrix = p => {
+    const out = [];
+    for (let c = -7; c <= 35; c += 3) {
+      const r = (c * 5 + p * 2) % 30 - 7;
+      out.push(px(c, r, 'cg', 'w'), px(c, r - 1, 'hm', 'w'), px(c, r - 2, 'hm', 'w'));
+    }
+    return out;
+  };
+  const HOOD = [rect(6, -1, 21, 3, 'hd2'), rect(5, 3, 7, 16, 'hd2'), rect(20, 3, 22, 16, 'hd2'), rect(7, 13, 20, 16, 'hd2'), rect(10, 14, 17, 15, 'hk3')];
+  const DESK = [rect(-6, 14, 35, 14, 'hk3', 'w'), rect(-6, 15, 35, 19, 'hd2', 'w')];
+  const MON = [rect(19, 1, 34, 10, 'hk3', 'w'), rect(20, 2, 33, 9, 'k', 'w'), rect(26, 11, 27, 13, 'hk3', 'w')];
+  const text = p => [...Array(5)].map((_, k) => rect(21, 2 + k, 21 + (k * 5 + p * 3) % 10, 2 + k, 'cg', 'w'));
+  const bar = w => [...box(20, 8, 33, 9, 'cg', 'w'), rect(21, 8, 21 + w, 9, 'cg', 'w')];
+  const fr = [];
+  for (let p = 0; p < 12; p++) fr.push({ x:X, armL: p % 2 ? 10 : 11, armR: p % 2 ? 11 : 10,
+    under:[...ROOM, ...matrix(p), ...MON, ...text(p).slice(0, 4), ...bar(p)], over:[...HOOD, ...SHADES, ...DESK], d:80 });
+  const granted = [rect(20, 2, 33, 9, 'cg', 'w'), rect(22, 4, 31, 7, 'k', 'w'), rect(23, 5, 30, 6, 'cg', 'w')];
+  fr.push({ x:X, armL:'hold', armR:'hold', tail:'up', under:[...ROOM, ...matrix(12), ...MON, ...granted], over:[...HOOD, ...SHADES, px(10, 8, 'wf', 'f'), ...DESK], d:400 },
+          { x:X, armL:'hold', armR:'hold', under:[...ROOM, ...matrix(13), ...MON, ...granted], over:[...HOOD, ...SHADES, ...DESK], d:400 },
+          { x:X, armL:'hold', armR:'hold', tail:'up', under:[...ROOM, ...matrix(14), ...MON, ...granted], over:[...HOOD, ...SHADES, px(18, 8, 'wf', 'f'), ...DESK], d:600 });
+  return fr;
+}
+
+// watching TV: couch, popcorn, a cartoon on screen, then a scary bit
+// living room shared by Watch TV and Gaming: couch on the left, TV on a stand on the right
+const LIVING_X = -7;
+const COUCH_BACK = [rect(-6, 1, 19, 11, 'nb', 'w'), rect(-6, 1, 19, 1, 'qb', 'w'), px(0, 5, 'qb', 'w'), px(6, 5, 'qb', 'w'), px(12, 5, 'qb', 'w')];
+const COUCH_FRONT = [rect(-6, 12, 19, 12, 'qb', 'w'), rect(-6, 13, 19, 16, 'nb', 'w'),          // cushion edge + seat front
+                     rect(-6, 7, -5, 16, 'qb', 'w'), rect(18, 7, 19, 16, 'qb', 'w'),            // armrests beside him
+                     rect(-6, 17, -5, 19, 'wk', 'w'), rect(18, 17, 19, 19, 'wk', 'w'),          // couch legs
+                     rect(8, 12, 10, 13, 'b', 'g'), rect(17, 12, 19, 13, 'b', 'g'),             // his feet stay planted on the
+                     rect(8, 13, 10, 13, 'bd', 'g'), rect(17, 13, 19, 13, 'bd', 'g')];          // cushion edge (don't bob/hop)
+const TV_SET = [rect(20, 1, 35, 11, 'tv', 'w'), rect(24, 12, 31, 12, 'wk', 'w'), rect(26, 13, 29, 19, 'wk', 'w')];
+
+function tvFrames() {
+  const X = LIVING_X, TV = TV_SET;
+  const sunny = p => [rect(21, 2, 34, 7, 'sw', 'w'), rect(21, 8, 34, 9, 'ga', 'w'), rect(32, 3, 33, 4, 'su', 'w'),
+    rect(22 + (p * 2) % 10, 6 - [0, 2, 3, 2][p % 4], 23 + (p * 2) % 10, 7 - [0, 2, 3, 2][p % 4], 'ce', 'w')];
+  const spooky = p => [rect(21, 2, 34, 9, 'sc', 'w'), rect(32, 3, 33, 4, 'hy', 'w'),
+    ...(p >= 2 ? [rect(25, 4, 29, 9, 'nw', 'w'), px(26, 5, 'k', 'w'), px(28, 5, 'k', 'w'), rect(27, 7, 27, 7, 'k', 'w')] : [])];
+  const bar = p => [rect(21, 10, 21 + p, 10, 'ce', 'w')];
+  // popcorn bowl held by his paws (his side arms are hidden so there's only one pair of hands);
+  // when he eats, the right paw lifts a piece of popcorn up to his mouth
+  const popBowl = eat => [rect(11, 13, 16, 15, 'ce'), px(12, 14, 'nw'), px(14, 14, 'nw'), px(16, 14, 'nw'),
+    ...[11, 12, 13, 14, 15, 16].map(c => px(c, 12, c % 2 ? 'nw' : 'hy')), px(12, 11, 'nw'), px(15, 11, 'hy'),
+    rect(9, 13, 10, 14, 'bd'), ...(eat ? [rect(16, 10, 17, 11, 'bd'), px(15, 10, 'nw')] : [rect(17, 13, 18, 14, 'bd')])];
+  const sit = { x:X, dy:-4, armL:'none', armR:'none', tail:'none', noShadow:1 };   // raised onto the seat
+  const fr = [];
+  for (let p = 0; p < 8; p++) {
+    const eat = p === 2, chew = p === 3 || p === 4, laugh = p === 6 || p === 7;
+    fr.push({ ...sit, teeth: chew && p === 3 ? 'in' : 'out',
+      eyes: laugh ? 'happy' : 'open', blush: laugh ? 1 : 0, squash: laugh && p === 7 ? 1 : 0,
+      under:[...COUCH_BACK, ...TV, ...sunny(p), ...bar(p)], over:[...COUCH_FRONT, ...popBowl(eat)], d:260 });
+  }
+  for (let p = 0; p < 4; p++) fr.push({ ...sit, eyes:'wide', earsFlat: p >= 2 ? 1 : 0, dy: p === 2 ? -5 : -4,   // small startle hop that keeps his legs behind the cushion
+    under:[...COUCH_BACK, ...TV, ...spooky(p), ...bar(8 + p)],
+    over:[...COUCH_FRONT, ...popBowl(false), ...(p === 2 ? [px(10, 6, 'nw'), px(17, 5, 'hy'), px(8, 8, 'nw'), px(19, 7, 'nw')] : [])], d: p === 2 ? 200 : 350 });
+  fr.push({ ...sit, eyes:'happy', blush:1, under:[...COUCH_BACK, ...TV, ...sunny(0), ...bar(12)], over:[...COUCH_FRONT, ...popBowl(false)], d:600 });
+  return fr;
+}
+
+// ---- Drinks: held in both front paws (like the apple) ------------------------
+const PAWS = r => [rect(10, r + 1, 11, r + 2, 'bd'), rect(16, r + 1, 17, r + 2, 'bd')];
+const HANDS = { armL:'none', armR:'none' };
+
+// drinking water: a clear glass whose water level drops with each gulp
+function waterFrames() {
+  const glass = (r, lvl) => [rect(12, r, 12, r + 4, 'gs'), rect(15, r, 15, r + 4, 'gs'), rect(12, r + 4, 15, r + 4, 'gs'),
+    ...(lvl > 0 ? [rect(13, r + 4 - lvl, 14, r + 3, 'w1')] : []), ...PAWS(r)];
+  const fr = [{ ...HANDS, over:glass(13, 4), d:500 }, { ...HANDS, over:glass(12, 4), d:200 }];
+  for (let k = 0; k < 4; k++) fr.push({ ...HANDS, dy:-1, eyes:'closed', squash: k % 2, nose: k % 2, over:glass(11, 3 - k), d:300 });
+  fr.push({ ...HANDS, over:[...glass(13, 0), px(13, 12, 'sw')], eyes:'happy', d:400 },
+          { ...HANDS, eyes:'happy', blush:1, over:[...glass(13, 0), px(6, 5, 'sw'), px(21, 4, 'sw'), px(5, 9, 'wc'), px(22, 8, 'wc')], d:700 });
+  return fr;
+}
+
+// drinking soda: crack the can open (psst), glug glug with fizz, then a big burp
+function sodaFrames() {
+  const can = r => [rect(12, r, 15, r + 4, 'ce'), rect(12, r + 2, 15, r + 2, 'nw'), rect(12, r, 15, r, 'cr'), ...PAWS(r)];
+  const fizz = (r, k) => [[11, r - 1 - k % 2], [16, r - 2 + k % 2], [13, r - 3 + k % 2]].map(([c, rr]) => px(c, rr, 'wf'));
+  const fr = [
+    { ...HANDS, over:can(13), d:500 },
+    { ...HANDS, eyes:'wide', over:[...can(13), px(14, 12, 'cr'), px(13, 11, 'sw'), px(15, 10, 'sw'), px(12, 9, 'wf'), px(16, 11, 'wf')], d:250 },  // psst!
+    { ...HANDS, over:can(12), d:200 },
+  ];
+  for (let k = 0; k < 4; k++) fr.push({ ...HANDS, dy:-1, eyes:'closed', squash: k % 2, over:[...can(11), ...fizz(11, k)], d:280 });
+  fr.push({ ...HANDS, over:can(13), d:300 },
+          { ...HANDS, eyes:'closed', squash:1, blush:1, earsFlat:1, over:[...can(13), rect(16, 9, 18, 10, 'd'), px(19, 8, 'd'), px(18, 7, 'd')], d:350 },   // BURP
+          { ...HANDS, eyes:'happy', blush:1, over:[...can(13), px(20, 6, 'd')], d:600 });
+  return fr;
+}
+
+// drinking juice: sip through a straw, the box crumples as it empties
+function juiceFrames() {
+  const box = (w, dent) => [rect(12, 14, 11 + w, 17, 'fl'), rect(12, 14, 11 + w, 14, 'su'), rect(13, 15, 13 + Math.min(1, w - 2), 16, 'ga'),
+    ...(dent ? [px(12 + (w >> 1), 16, 'hr')] : []), rect(13, 12, 13, 13, 'nw'), px(13, 12, 'ce'), ...PAWS(13)];
+  const fr = [{ ...HANDS, over:box(4, 0), d:500 }];
+  [4, 4, 3, 3, 3, 2].forEach((w, k) => fr.push({ ...HANDS, teeth: k % 2 ? 'in' : 'out', eyes:'closed', blush: k % 2,
+    nose: k % 2, over:box(w, w < 4 ? 1 : 0), d:260 }));
+  fr.push({ ...HANDS, eyes:'happy', over:box(2, 1), d:300 },
+          { ...HANDS, eyes:'happy', blush:1, dy:-1, over:box(2, 1), d:250 },
+          { ...HANDS, eyes:'happy', blush:1, over:box(2, 1), d:600 });
+  return fr;
+}
+
+// cozy by the wood stove (kamin): wrapped in a plaid blanket, sipping hot chocolate
+function cozyFrames() {
+  const X = -6;
+  // cast-iron stove with a window, chimney pipe, little legs, a log pile and a warm glow on the floor
+  const STOVE = [rect(14, 20, 35, 21, 'gw', 'w'), rect(25, -7, 27, 6, 'sv', 'w'), rect(20, 6, 32, 6, 'pn', 'w'),
+                 rect(21, 7, 31, 18, 'sv', 'w'), rect(23, 10, 29, 15, 'hk', 'w'), rect(22, 9, 30, 9, 'pn', 'w'),
+                 rect(22, 19, 23, 20, 'pn', 'w'), rect(29, 19, 30, 20, 'pn', 'w'),
+                 rect(32, 16, 35, 19, 'wd', 'w'), px(33, 17, 'wk', 'w'), px(35, 18, 'wk', 'w'), px(32, 19, 'wk', 'w')];
+  const fire = k => {
+    const out = [rect(24, 15, 28, 15, 'wd', 'w')];
+    [2, 3, 4, 3, 2].forEach((h0, j) => {
+      const h = Math.max(1, h0 + ((j + k) % 3) - 1), c = 24 + j;
+      for (let i = 0; i < h; i++) out.push(px(c, 14 - i, i === h - 1 ? 'su' : i ? 'fl' : 'ce', 'w'));
+    });
+    if (k % 2) out.push(px(26 + (k % 3) - 1, 9 - (k % 2), 'su', 'w'));      // a spark
+    return out;
+  };
+  const RUG = [rect(-6, 20, 18, 21, 'qb', 'w'), ...[-6, -3, 0, 3, 6, 9, 12, 15, 18].map(c => px(c, 22, 'qb', 'w'))];
+  // blanket wraps him like a hood: face, ears and tail peek out
+  const BLANKET = [rect(7, 3, 20, 3, 'bk'), rect(6, 4, 21, 5, 'bk'), rect(4, 6, 7, 12, 'bk'), rect(20, 6, 23, 12, 'bk'),
+                   rect(5, 5, 5, 5, 'bk'), rect(22, 5, 22, 5, 'bk'), rect(4, 13, 23, 19, 'bk'),
+                   rect(8, 5, 19, 5, 'bs'), rect(7, 6, 7, 12, 'bs'), rect(20, 6, 20, 12, 'bs'), rect(8, 13, 19, 13, 'bs'),   // trim around the face
+                   rect(5, 6, 5, 19, 'hd'), rect(22, 6, 22, 19, 'hd'), rect(4, 16, 23, 16, 'hd'), rect(10, 4, 10, 4, 'hd'), rect(17, 4, 17, 4, 'hd')];
+  const mug = up => {
+    const r = up ? 12 : 14;
+    return [rect(12, r, 15, r + 3, 'dg'), rect(12, r, 15, r, 'hr'), px(13, r, 'nw'), px(16, r + 1, 'dg'), px(16, r + 2, 'dg'),
+            rect(10, r + 1, 11, r + 2, 'b'), rect(17, r + 1, 18, r + 2, 'b')];                // paws poking out of the blanket
+  };
+  const steam = k => [px(13 + k % 2, 12, 'd'), px(14 - k % 2, 11, 'd'), px(13 + k % 2, 10 - k % 2, 'd')];
+  const fr = [];
+  for (let k = 0; k < 10; k++) {
+    const sip = k === 4 || k === 5;
+    fr.push({ x:X, armL:'none', armR:'none', squash: k % 2, eyes: sip ? 'closed' : k === 8 || k === 9 ? 'happy' : 'open',
+      blush: sip || k > 6 ? 1 : 0, under:[...RUG, ...STOVE, ...fire(k)],
+      over:[...BLANKET, ...mug(sip), ...(sip ? [] : steam(k))], d: sip ? 450 : 320 });
+  }
+  return fr;
+}
+
+// full 360 turn: front -> side -> back -> other side -> front, twice, then a happy pose
+function turnFrames() {
+  const spin = [{}, { view:'side' }, { view:'back' }, { view:'side', flip:1 }];
+  const fr = [];
+  for (let n = 0; n < 2; n++) spin.forEach((v, k) => fr.push({ ...v, squash: k % 2, d: 150 }));
+  fr.push({ d:150 }, { eyes:'happy', blush:1, armL:'up', armR:'up', tail:'up', dy:-1, d:300 }, { eyes:'happy', blush:1, d:600 });
+  return fr;
+}
+
+// kicking a ball... whiff! he tips over backwards, sees stars, gets up embarrassed and walks back
+function kickFrames() {
+  const ball = c => [rect(c + 1, 16, c + 2, 16, 'nw', 'w'), rect(c, 17, c + 3, 18, 'nw', 'w'), rect(c + 1, 19, c + 2, 19, 'nw', 'w'),
+                     px(c + 1, 17, 'k', 'w'), px(c + 3, 18, 'k', 'w'), px(c, 18, 'cl', 'w'), px(c + 2, 19, 'cl', 'w')];
+  const star = (c, r) => [px(c, r, 'hy', 'w'), px(c - 1, r, 'hy', 'w'), px(c + 1, r, 'hy', 'w'), px(c, r - 1, 'hy', 'w'), px(c, r + 1, 'hy', 'w')];
+  const stars = k => (k % 2 ? [[-1, 5], [4, 4], [8, 6]] : [[1, 4], [6, 6], [-2, 7]]).flatMap(([c, r]) => star(c, r));
+  const X = 6, S = { view:'side' };
+  const fr = [];
+  [-2, 0, 2, 4].forEach((x, k) => fr.push({ ...S, x, squash: k % 2, under:ball(30), d:120 }));            // run-up
+  fr.push({ ...S, x:X, dy:-1, under:ball(30), d:200 },                                                  // wind-up
+          { ...S, x:X, kick:1, eyes:'wide', under:[...ball(30), px(29, 13, 'd', 'w'), px(31, 12, 'd', 'w'), px(33, 13, 'd', 'w')], d:200 },   // whiff!
+          { ...S, x:X, kick:1, rot:-0.5, tail:'none', eyes:'wide', under:ball(30), d:120 },              // tipping over
+          { ...S, x:X, kick:1, rot:-1, tail:'none', eyes:'dizzy', dust:1, under:ball(31), d:250 });      // THUD
+  for (let k = 0; k < 4; k++) fr.push({ ...S, x:X, rot:-1, tail:'none', eyes:'dizzy', under:[...ball(31 + (k > 1 ? 1 : 0)), ...stars(k)], d:260 });
+  fr.push({ ...S, x:X, rot:-0.5, tail:'none', under:ball(32), d:160 },                                  // getting up
+          { ...S, x:X, under:ball(32), d:160 },
+          { x:X, eyes:'closed', blush:1, armR:'up', under:ball(32), d:600 },                             // embarrassed
+          { x:X, eyes:'happy', blush:1, under:ball(32), d:400 });
+  for (let x = X - 1, p = 0; x >= -2; x--, p++) fr.push(step(x, p, 1, { under:ball(32 - Math.min(2, p >> 1)) }));   // walk back
+  fr.push({ x:-2, flip:0, under:ball(30), d:250 });
+  return fr;
+}
+
+// painting: beret on, palette in one paw, brush in the other, a little landscape appears stroke by stroke
+function paintFrames() {
+  const X = -4;
+  const EASEL = [rect(26, 2, 26, 20, 'wd', 'w'), rect(21, 6, 21, 20, 'wk', 'w'), rect(31, 6, 31, 20, 'wk', 'w'),
+                 rect(19, 15, 33, 15, 'wk', 'w'), rect(20, 3, 32, 14, 'cl', 'w'), rect(21, 4, 31, 13, 'nw', 'w')];
+  const STROKES = [                                                                         // [brush tip (world), colour, what appears]
+    [[25, 6], 'sw', [rect(21, 4, 31, 8, 'sw', 'w')]],                                                       // sky
+    [[29, 6], 'su', [rect(28, 5, 29, 6, 'su', 'w')]],                                                       // sun
+    [[23, 5], 'nw', [rect(22, 5, 24, 5, 'nw', 'w'), px(23, 4, 'nw', 'w')]],                                // cloud
+    [[25, 11], 'ga', [rect(21, 9, 25, 9, 'ga', 'w'), rect(21, 10, 28, 10, 'ga', 'w'), rect(21, 11, 31, 13, 'ga', 'w')]],   // hills
+    [[24, 11], 'wk', [rect(24, 10, 24, 12, 'wk', 'w')]],                                                   // tree trunk
+    [[24, 8], 'gl', [rect(23, 8, 25, 9, 'gl', 'w'), px(24, 7, 'gl', 'w')]],                                // tree crown
+    [[29, 11], 'b', [rect(29, 11, 30, 12, 'b', 'w'), px(29, 10, 'b', 'w'), px(28, 12, 'r', 'w')]],         // a tiny beaver
+  ];
+  const BERET = [rect(10, 2, 17, 3, 'ce'), rect(11, 1, 16, 1, 'ce'), px(14, 0, 'ce'), rect(10, 3, 17, 3, 'rd')];
+  const PALETTE = [rect(0, 11, 6, 13, 'dg'), px(1, 10, 'dg'), px(0, 12, 'nw'), px(2, 11, 'sw'), px(4, 11, 'su'), px(2, 13, 'ga'), px(5, 13, 'ce')];
+  // his right arm reaches toward the spot being painted: the shoulder raises/lowers with the stroke's height,
+  // the forearm stretches out on each dab, and the brush runs from his paw to the tip
+  const reach = ([tc, tr], col, dab) => {
+    const top = Math.max(3, Math.min(10, tr - 2)), r = dab ? 2 : 1;
+    const paw = [24 + r, top], b = [tc - X, tr], n = Math.max(1, Math.abs(b[0] - paw[0]), Math.abs(b[1] - paw[1]));
+    const out = [rect(23, top, 23 + r, top + 1, 'b'), px(24 + r, top, 'bd')];                // forearm + paw
+    for (let i = 1; i <= n; i++) out.push(px(Math.round(paw[0] + (b[0] - paw[0]) * i / n), Math.round(paw[1] + (b[1] - paw[1]) * i / n), i === n ? col : 'wd'));
+    return { armR: top, over: out };
+  };
+  const painted = k => STROKES.slice(0, k).flatMap(st => st[2]);
+  const fr = [{ x:X, armL:'hold', armR:'mid', under:EASEL, over:[...BERET, ...PALETTE], d:500 }];
+  STROKES.forEach(([tip, col], k) => {
+    const a = reach(tip, col, false), b = reach([tip[0] + 1, tip[1] + 1], col, true);
+    fr.push({ x:X, armL:'hold', armR:a.armR, eyes:'open',   under:[...EASEL, ...painted(k)],     over:[...BERET, ...PALETTE, ...a.over], d:220 },
+            { x:X, armL:'hold', armR:b.armR, eyes:'closed', under:[...EASEL, ...painted(k + 1)], over:[...BERET, ...PALETTE, ...b.over], d:240 });
+  });
+  const done = [...EASEL, ...painted(STROKES.length)];
+  fr.push({ x:X - 1, armL:'hold', under:done, over:[...BERET, ...PALETTE], lift:'L', d:200 },              // step back
+          { x:X - 2, armL:'hold', under:done, over:[...BERET, ...PALETTE], d:300 },
+          { x:X - 2, armL:'hold', armR:'up', eyes:'happy', blush:1, under:done, over:[...BERET, ...PALETTE, px(10, 11, 'sw'), px(17, 12, 'su')], d:900 });   // proud, paint on his cheeks
+  return fr;
+}
+
+// gaming on the couch: controller in his lap, a console by the TV, a little original platformer on screen
+function gameFrames() {
+  const X = LIVING_X;
+  const CONSOLE = [rect(30, 17, 34, 19, 'tv', 'w'), rect(30, 17, 34, 17, 'hk3', 'w'), px(31, 18, 'cg', 'w')];
+  const pad = (j, press) => [rect(10, 12 + j, 17, 14 + j, 'sv'), px(11, 13 + j, 'k'), px(12, 12 + j, 'k'), px(12, 14 + j, 'k'), px(13, 13 + j, 'k'),
+    px(15, 12 + j, press === 1 ? 'nw' : 'ce'), px(16, 13 + j, press === 2 ? 'nw' : 'ga'), rect(8, 12 + j, 9, 13 + j, 'bd'), rect(18, 12 + j, 19, 13 + j, 'bd')];
+  const OBST = [33, 31, 29, 27, 25, 23, 21, 21], HERO = [8, 8, 8, 6, 4, 6, 8, 8];
+  const level = p => {
+    const o = OBST[p], h = HERO[p], out = [rect(21, 2, 34, 7, 'sw', 'w'), rect(21, 8, 34, 8, 'ga', 'w'), rect(21, 9, 34, 10, 'wd', 'w'),
+      px(23, 3, 'nw', 'w'), px(24, 3, 'nw', 'w'), px(31, 4, 'nw', 'w')];
+    if (o >= 21) out.push(rect(o, 6, o + 1, 7, 'ce', 'w'));                                   // block to jump over
+    if (p < 4) out.push(px(29 - p, 4, 'su', 'w'));                                         // coin (collected mid-jump)
+    out.push(rect(24, h - 2, 25, h - 1, 'hy', 'w'), px(25, h - 2, 'k', 'w'));               // the little hero
+    return out;
+  };
+  const WIN = [rect(21, 2, 34, 10, 'sc', 'w'), rect(26, 4, 29, 6, 'su', 'w'), px(25, 4, 'su', 'w'), px(30, 4, 'su', 'w'),
+               rect(27, 7, 28, 8, 'su', 'w'), rect(26, 9, 29, 9, 'su', 'w'), px(22, 3, 'nw', 'w'), px(33, 5, 'hy', 'w'), px(23, 8, 'pl', 'w')];
+  const sit = { x:X, dy:-4, armL:'none', armR:'none', tail:'none', noShadow:1 };   // only the paws on the pad, no side hands
+  const fr = [];
+  for (let p = 0; p < 8; p++) fr.push({ ...sit, dy: HERO[p] < 8 ? -5 : -4, eyes: p === 4 ? 'wide' : 'open', teeth: p % 2 ? 'in' : 'out',   // gritting his teeth in concentration
+    under:[...COUCH_BACK, ...TV_SET, ...CONSOLE, ...level(p)], over:[...COUCH_FRONT, ...pad(p % 2, p === 3 ? 1 : p % 3 === 1 ? 2 : 0)], d:200 });
+  fr.push({ ...sit, eyes:'happy', blush:1, dy:-5, tail:'none', under:[...COUCH_BACK, ...TV_SET, ...CONSOLE, ...WIN],   // victory bounce,
+            over:[...COUCH_FRONT, ...pad(0, 1)], d:300 },                                                                // controller still in his lap
+          { ...sit, eyes:'happy', blush:1, under:[...COUCH_BACK, ...TV_SET, ...CONSOLE, ...WIN], over:[...COUCH_FRONT, ...pad(1, 2)], d:200 },
+          { ...sit, eyes:'happy', blush:1, dy:-5, under:[...COUCH_BACK, ...TV_SET, ...CONSOLE, ...WIN], over:[...COUCH_FRONT, ...pad(0, 1)], d:300 },
+          { ...sit, eyes:'happy', blush:1, under:[...COUCH_BACK, ...TV_SET, ...CONSOLE, ...WIN], over:[...COUCH_FRONT, ...pad(0, 0)], d:700 });
+  return fr;
+}
+
+// ---- Winter -------------------------------------------------------------------
+const disc = (cx, cy, r, col, m = 'w') => {
+  const out = [];
+  for (let d = -r; d <= r; d++) { const w = Math.round(Math.sqrt(r * r - d * d)); out.push(rect(cx - w, cy + d, cx + w, cy + d, col, m)); }
+  return out;
+};
+const snowball = (cx, cy, r, m = 'w') => [...disc(cx, cy, r + 1, 'cl', m), ...disc(cx + 1, cy + 1, r - 1, 'sn2', m), ...disc(cx, cy, Math.max(0, r - 1), 'nw', m),
+                                          ...(r > 1 ? [rect(cx - r, cy, cx - r, cy, 'nw', m), rect(cx, cy - r, cx, cy - r, 'nw', m)] : [])];
+const flakes = p => [...Array(14)].map((_, j) => px((j * 9 + 3 + (p + j) % 2) % 44 - 8, (j * 7 + p * 2) % 30 - 7, 'nw', 'w'));
+const WINTER = [rect(-8, -7, 35, 22, 'sk', 'w'), rect(-8, 20, 35, 22, 'nw', 'w'), rect(-8, 20, 35, 20, 'sn2', 'w')];
+
+// building a snowman: roll the base, stack the middle and head, then decorate (with buck teeth, of course)
+function snowmanFrames() {
+  const X = -4, BASE = [27, 15, 4], MID = [27, 8, 3], HEAD = [27, 3, 2];
+  const FACE = [px(26, 2, 'k', 'w'), px(28, 2, 'k', 'w'), rect(28, 3, 30, 3, 'fl', 'w'), px(27, 4, 'dg', 'w'), px(26, 4, 'dg', 'w')];
+  const ARMS = [px(23, 7, 'wk', 'w'), px(22, 6, 'wk', 'w'), px(21, 5, 'wk', 'w'), px(31, 7, 'wk', 'w'), px(32, 6, 'wk', 'w'), px(33, 5, 'wk', 'w'), px(34, 5, 'wk', 'w')];
+  const BUTTONS = [px(27, 7, 'k', 'w'), px(27, 9, 'k', 'w'), px(27, 13, 'k', 'w')];
+  const fr = [];
+  let p = 0;
+  for (const r of [1, 2, 3, 4]) for (let k = 0; k < 2; k++, p++)                                       // roll the base bigger
+    fr.push({ x:X, armL:'hold', armR:'hold', lift: k ? 'L' : 'R', squash:k, under:[...WINTER, ...snowball(27, 19 - r, r), ...flakes(p)], d:200 });
+  const base = snowball(...BASE);
+  fr.push({ x:X, armL:'up', armR:'up', under:[...WINTER, ...base, ...flakes(p++)], over:snowball(13, -3, 3, 'b'), d:400 },   // lift the middle
+          { x:X, armR:'mid', under:[...WINTER, ...base, ...snowball(...MID), ...flakes(p++)], d:300 });
+  const body = [...base, ...snowball(...MID)];
+  fr.push({ x:X, armL:'up', armR:'up', under:[...WINTER, ...body, ...flakes(p++)], over:snowball(13, -2, 2, 'b'), d:400 },  // lift the head
+          { x:X, armR:'mid', under:[...WINTER, ...body, ...snowball(...HEAD), ...flakes(p++)], d:300 });
+  const all = [...body, ...snowball(...HEAD)];
+  fr.push({ x:X, armR:'mid', under:[...WINTER, ...all, ...FACE, ...flakes(p++)], d:350 },                     // face
+          { x:X, armR:'mid', under:[...WINTER, ...all, ...FACE, ...ARMS, ...flakes(p++)], d:350 },            // stick arms
+          { x:X, armR:'mid', under:[...WINTER, ...all, ...FACE, ...ARMS, ...BUTTONS, ...flakes(p++)], d:350 });
+  for (let k = 0; k < 4; k++) fr.push({ x:X, eyes:'happy', blush:1, squash:k % 2, armL: k % 2 ? 'up' : 'down',
+    under:[...WINTER, ...all, ...FACE, ...ARMS, ...BUTTONS, ...flakes(p++)], d:350 });
+  return fr;
+}
+
+// snow angel, seen from above: flap flap... and the imprint is a very strange beaver-shaped angel
+function angelFrames() {
+  const L = -6;                                                                      // where he lies
+  const SNOW = [rect(-8, -7, 35, 22, 'sn', 'w'), px(-5, -4, 'sw', 'w'), px(24, -3, 'sw', 'w'), px(30, 15, 'sw', 'w'), px(20, 20, 'sw', 'w'), px(-3, 19, 'sw', 'w')];
+  const at = (c0, r0, c1, r1, col) => rect(c0 + L, r0, c1 + L, r1, col, 'w');      // body coords -> fixed world spot
+  const imprint = (col, wings) => [
+    at(6, 3, 21, 17, col), at(7, -1, 12, 3, col), at(15, -1, 20, 3, col),             // big square body + round ears
+    ...(wings ? [at(1, 3, 6, 13, col), at(0, 5, 0, 11, col), at(21, 3, 26, 13, col), at(27, 5, 27, 11, col),   // stubby wings
+                 at(5, 17, 22, 20, col), at(-2, 12, 6, 20, col), at(-3, 14, -3, 19, col)] : []),              // leg fan + tail paddle fan
+  ];
+  const finalPrint = [...imprint('sn3', true), ...imprint('sn2', true).map(([c0, r0, c1, r1, , m]) => [c0 + 1, r0 + 1, c1 - 1, r1 - 1, 'sn2', m]),
+                      at(13, 10, 13, 11, 'sn3'), at(14, 10, 14, 10, 'sn3'),            // two buck-tooth dents
+                      at(9, 8, 10, 9, 'sn3'), at(17, 8, 18, 9, 'sn3')];                 // eye dents
+  const fr = [];
+  for (let k = 0; k < 8; k++) fr.push({ x:L, noShadow:1, armL: k % 2 ? 'up' : 'down', armR: k % 2 ? 'up' : 'down',
+    lift: k % 2 ? 'L' : 'R', tail: k % 2 ? 'up' : 'rest', eyes: k % 3 === 2 ? 'closed' : 'happy',
+    under:[...SNOW, ...imprint('sn2', k >= 2)], d:200 });
+  [[-6, -2], [0, -4], [6, -2], [11, 0]].forEach(([x, dy], k) => fr.push({ x, dy, noShadow:1, tail:'up', armL:'up', armR:'up',
+    under:[...SNOW, ...finalPrint], d: k === 3 ? 200 : 140 }));                        // hop out of it
+  fr.push({ x:11, noShadow:1, eyes:'wide', under:[...SNOW, ...finalPrint], d:700 },
+          { x:11, noShadow:1, eyes:'closed', blush:1, sweat:[19, 6], armR:'up', under:[...SNOW, ...finalPrint], d:900 },   // ...huh.
+          { x:11, noShadow:1, eyes:'happy', under:[...SNOW, ...finalPrint], d:600 });
+  return fr;
+}
+
+// video call: joins, talks... on mute, everyone is confused, unmutes, embarrassed, waves bye
+function callFrames() {
+  const X = -4;
+  const DESK = [rect(-6, 14, 35, 14, 'wk', 'w'), rect(-6, 15, 35, 19, 'wd', 'w'), rect(5, 13, 15, 13, 'cl', 'w'), px(8, 13, 'nw', 'w'), px(12, 13, 'nw', 'w')];
+  const MON = [rect(19, 1, 34, 10, 'sv', 'w'), rect(20, 2, 33, 9, 'sc', 'w'), rect(26, 11, 27, 13, 'cl', 'w'), rect(24, 13, 29, 13, 'cl', 'w'),
+               px(26, 0, 'k', 'w'), px(27, 0, 'k', 'w')];                                                   // webcam on top
+  const face = (cx, cy, col, mood, talk) => [rect(cx - 1, cy - 1, cx + 1, cy + 1, col, 'w'),
+    px(cx - 1, cy - 1, 'k', 'w'), px(cx + 1, cy - 1, 'k', 'w'), ...(talk ? [px(cx, cy + 1, 'k', 'w')] : []),
+    ...(mood === '?' ? [px(cx + 2, cy - 2, 'nw', 'w'), px(cx + 3, cy - 2, 'nw', 'w'), px(cx + 3, cy - 1, 'nw', 'w'), px(cx + 2, cy + 1, 'nw', 'w')] : []),
+    ...(mood === 'happy' ? [px(cx - 2, cy, 'p', 'w'), px(cx + 2, cy, 'p', 'w')] : [])];
+  const me = (talk, muted) => [rect(28, 7, 32, 9, 'b', 'w'), px(28, 6, 'b', 'w'), px(32, 6, 'b', 'w'), px(29, 7, 'k', 'w'), px(31, 7, 'k', 'w'),
+    px(30, 8, 'k', 'w'), px(30, 9, talk ? 'w' : 'b', 'w'), ...(muted ? [rect(32, 8, 32, 9, 'ce', 'w'), px(33, 9, 'ce', 'w')] : [])];
+  const tiles = (n, mood, speaking, talk, muted) => [
+    ...(n > 0 ? face(23, 3, 'hy', mood, false) : []), ...(n > 1 ? face(30, 3, 'pl', mood, false) : []),
+    ...(n > 2 ? face(23, 7, 'fs', mood, false) : []), ...(n > 3 ? me(talk, muted) : []),
+    ...(speaking ? box(27, 6, 33, 9, 'cg', 'w') : []), rect(26, 2, 26, 9, 'sv', 'w'), rect(20, 5, 33, 5, 'sv', 'w')];   // tile gaps
+  const scene = (extra, over = []) => ({ x:X, under:[...MON, ...extra], over:[...DESK, ...over] });
+  const fr = [];
+  [1, 2, 3, 4].forEach(n => fr.push({ ...scene(tiles(n, '', false, false, true)), d:220 }));                      // everyone joins
+  fr.push({ ...scene(tiles(4, 'happy', false, false, true)), armR:'up', eyes:'happy', d:300 },                     // hi!
+          { ...scene(tiles(4, 'happy', false, false, true)), armR:'mid', eyes:'happy', d:300 });
+  for (let k = 0; k < 4; k++) fr.push({ ...scene(tiles(4, k > 1 ? '?' : '', false, k % 2 === 0, true)),           // talking... on mute
+    teeth: k % 2 ? 'in' : 'out', nose: k % 2, armL: k % 2 ? 'mid' : 'down', d:220 });
+  fr.push({ ...scene(tiles(4, '?', false, false, true)), eyes:'wide', sweat:[19, 6], d:500 },                       // oh no
+          { ...scene(tiles(4, '?', false, false, true)), armR:'hold', armL:'hold', eyes:'closed', d:250 },          // click unmute
+          { ...scene(tiles(4, '', true, true, false)), armR:'hold', armL:'hold', blush:1, d:250 });
+  for (let k = 0; k < 4; k++) fr.push({ ...scene(tiles(4, k > 1 ? 'happy' : '', true, k % 2 === 0, false)),        // talking for real
+    teeth: k % 2 ? 'in' : 'out', blush:1, d:220 });
+  fr.push({ ...scene(tiles(4, 'happy', true, false, false)), armR:'up', eyes:'happy', d:300 },                    // bye!
+          { ...scene(tiles(4, 'happy', true, false, false)), armR:'mid', eyes:'happy', d:300 },
+          { ...scene(tiles(4, 'happy', true, false, false)), armR:'up', eyes:'happy', d:300 },
+          { ...scene([]), d:600 });                                                                               // call ended
+  return fr;
+}
+
+// really sleep deprived: dark eye bags, messy fur, droopy ears, coffee in paw, sways, nods off, jolts awake
+function tiredFrames() {
+  const BAGS = [rect(9, 10, 10, 10, 'z', 'f'), rect(17, 10, 18, 10, 'z', 'f'), px(8, 10, 'z', 'f'), px(19, 10, 'z', 'f')];
+  const LIDS = [rect(9, 8, 10, 8, 'bd', 'f'), rect(17, 8, 18, 8, 'bd', 'f')];                         // heavy eyelids
+  const TUFT = [px(12, 3, 'b'), px(13, 2, 'b'), px(15, 3, 'b'), px(14, 1, 'b')];                     // messy bed-head fur
+  const mug = (r, steam) => [rect(12, r, 15, r + 3, 'nw'), rect(12, r, 15, r, 'hr'), px(16, r + 1, 'nw'), px(16, r + 2, 'nw'),
+    rect(10, r + 1, 11, r + 2, 'bd'), rect(17, r + 1, 18, r + 2, 'bd'), ...(steam ? [px(13, r - 1, 'd'), px(14, r - 2, 'd')] : [])];
+  const T = { armL:'none', armR:'none', earsFlat:1 };
+  const fr = [];
+  [0, 1, 0, -1].forEach((x, k) => fr.push({ ...T, x, eyes:'open', squash:1, over:[...TUFT, ...LIDS, ...BAGS, ...mug(14, k % 2)], d:350 }));   // swaying, eyes half shut
+  fr.push({ ...T, eyes:'closed', squash:1, dy:1, over:[...TUFT, ...BAGS, ...mug(15, 0)], zs:[[19, 2]], d:500 },                            // nodding off...
+          { ...T, eyes:'closed', squash:1, dy:2, over:[...TUFT, ...BAGS, ...mug(15, 0)], zs:[[20, -1]], d:600 },
+          { ...T, earsFlat:0, eyes:'wide', dy:-1, over:[...TUFT, ...BAGS, ...mug(13, 0), px(12, 11, 'hr'), px(16, 10, 'hr')], d:250 },  // JOLT awake (coffee sloshes)
+          { ...T, eyes:'wide', over:[...TUFT, ...BAGS, ...mug(14, 1)], d:400 },
+          { ...T, eyes:'closed', over:[...TUFT, ...BAGS, ...mug(11, 0)], d:500 },                                                     // big sip
+          { ...T, eyes:'open', squash:1, over:[...TUFT, ...LIDS, ...BAGS, ...mug(14, 1)], d:400 });
+  return fr;
+}
+
+// shocked in a good way: gasp, jump with arms up, paws to cheeks, hearts and sparkles everywhere
+function wowFrames() {
+  const heart = (c, r, col = 'ce') => [px(c, r, col, 'w'), px(c + 2, r, col, 'w'), rect(c, r + 1, c + 2, r + 1, col, 'w'), px(c + 1, r + 2, col, 'w')];
+  const spark = (c, r) => [px(c, r, 'su', 'w'), px(c - 1, r, 'sr', 'w'), px(c + 1, r, 'sr', 'w'), px(c, r - 1, 'sr', 'w'), px(c, r + 1, 'sr', 'w')];
+  const SHINE = [px(10, 9, 'wf', 'f'), px(18, 9, 'wf', 'f')];                                          // extra sparkle in his eyes
+  const CHEEKS = [rect(6, 10, 8, 12, 'bd'), rect(19, 10, 21, 12, 'bd')];                               // paws pressed to his cheeks
+  const fx = k => [...heart(-4, -2 + k % 2), ...heart(28, -4 + (k + 1) % 2, 'pl'), ...heart(-2, 6 - k % 2, 'pl'), ...heart(29, 6 + k % 2),
+                   ...spark(4 + k % 3, -5), ...spark(24 - k % 3, -6), ...spark(-5, 12 + k % 2), ...spark(32, 12 - k % 2)];
+  return [
+    { d:500 },
+    { eyes:'wide', over:SHINE, d:300 },                                                                // !!
+    { eyes:'wide', dy:-3, armL:'up', armR:'up', tail:'up', blush:1, over:[...SHINE, ...fx(0)], d:220 },   // jumps up
+    { eyes:'wide', dy:-4, armL:'up', armR:'up', tail:'up', blush:1, over:[...SHINE, ...fx(1)], d:200 },
+    { eyes:'wide', squash:1, blush:1, dust:1, over:[...SHINE, ...fx(0)], d:150 },
+    ...[0, 1, 2, 3].map(k => ({ armL:'none', armR:'none', eyes: k % 2 ? 'happy' : 'wide', blush:1, x: k % 2 ? 1 : -1,   // squeee, wiggling
+                                over:[...CHEEKS, ...(k % 2 ? [] : SHINE), ...fx(k)], d:180 })),
+    { eyes:'happy', blush:1, dy:-1, armL:'up', armR:'up', over:fx(1), d:300 },
+    { eyes:'happy', blush:1, over:fx(0), d:600 },
+  ];
+}
+
+// throwing a fit: stomps, flops onto his back, kicks and flails with tears flying, sulks, gets up and pouts
+function fitFrames() {
+  const X = 10, FLOOR = { rot:-1, pivot:[4, 20], noShadow:1, tail:'none' };
+  const tears = k => [[-4 - k % 2, 6 - k % 3], [1 + k % 2, 4 + k % 2], [-6, 10 - k % 2], [3, 6 - k % 3]].map(([c, r]) => px(c, r, 'sw', 'w'));
+  const dust = k => [[-7 + k % 2, 20], [16 - k % 2, 20], [-5, 19 - k % 2], [14 + k % 2, 19]].map(([c, r]) => px(c, r, 'd', 'w'));
+  const steam = k => [rect(4 + k % 2, 3 - k % 2, 5 + k % 2, 3 - k % 2, 'd', 'w'), rect(8 - k % 2, 2 + k % 2, 9 - k % 2, 2 + k % 2, 'd', 'w')];
+  const fr = [
+    { x:X, bodyCol:'ba', eyes:'angry', lift:'L', squash:1, armL:'up', armR:'mid', teeth:'in', d:160 },        // stomp
+    { x:X, bodyCol:'ba', eyes:'angry', lift:'R', armL:'mid', armR:'up', d:160 },
+    { x:X, bodyCol:'ba', eyes:'angry', lift:'L', squash:1, armL:'up', armR:'mid', teeth:'in', d:160 },
+    { x:X, ...FLOOR, rot:-0.5, bodyCol:'ba', eyes:'angry', armL:'up', armR:'up', d:120 },                      // flops down
+    { x:X, ...FLOOR, bodyCol:'ba', eyes:'closed', under:dust(0), d:160 },
+  ];
+  for (let k = 0; k < 10; k++) fr.push({ x: X + (k % 4 === 1 ? 1 : k % 4 === 3 ? -1 : 0), ...FLOOR, bodyCol:'ba',     // kick and flail
+    eyes: k % 3 === 2 ? 'closed' : 'angry', teeth: k % 2 ? 'in' : 'out', lift: k % 2 ? 'L' : 'R',
+    armL: k % 2 ? 'up' : 'down', armR: k % 2 ? 'down' : 'up', under:[...tears(k), ...dust(k), ...steam(k)], d:110 });
+  fr.push({ x:X, ...FLOOR, eyes:'closed', under:tears(1).slice(0, 1), d:600 },                                // sulking on the floor
+          { x:X, ...FLOOR, eyes:'sad', nose:1, d:500 },
+          { x:X, ...FLOOR, rot:-0.5, eyes:'sad', d:150 },                                                     // gets up
+          { x:X, eyes:'angry', earsFlat:1, armL:'hold', armR:'hold', squash:1, d:800 },                        // arms crossed, pouting
+          { x:X, eyes:'closed', earsFlat:1, armL:'hold', armR:'hold', d:500 });
+  return fr;
+}
+
+// huge lollipop + propeller beanie: the propeller spins, the lollipop's red/white spiral turns,
+// and to lick it he brings it down to his mouth
+function lollyFrames() {
+  const cap = k => [rect(10, 1, 13, 3, 'ce'), rect(14, 1, 17, 3, 'hy'), rect(11, 0, 13, 0, 'cb'), rect(14, 0, 16, 0, 'ga'),
+                    rect(10, 3, 17, 3, 'hd'), rect(13, -1, 14, -1, 'cr'),                                          // beanie + stem
+                    ...(k % 2 ? [rect(9, -2, 18, -2, 'cb'), rect(13, -2, 14, -2, 'ce')]                            // blade side-on...
+                              : [rect(12, -2, 15, -2, 'ce'), px(13, -3, 'cb'), px(14, -1, 'cb')])];               // ...blade end-on
+  // a real two-colour spiral: each pixel's colour comes from its angle + distance from the centre
+  const swirl = (cx, cy, R, k) => {
+    const out = [];
+    for (let dy = -R; dy <= R; dy++) {
+      const w = Math.round(Math.sqrt(R * R - dy * dy));
+      for (let dx = -w; dx <= w; dx++) {
+        const r = Math.sqrt(dx * dx + dy * dy);
+        let col;
+        if (r >= R - 0.6) col = 'rd';                                                     // rim
+        else {
+          const v = Math.atan2(dy, dx) / (2 * Math.PI) + r / 3.2 + k / 8;                 // turns a little each frame
+          col = ((Math.floor(v * 2) % 2) + 2) % 2 ? 'ce' : 'nw';
+        }
+        out.push(px(cx + dx, cy + dy, col));
+      }
+    }
+    out.push(px(cx - Math.round(R / 2), cy - Math.round(R / 2), 'wf'));                    // little shine
+    return out;
+  };
+  const R = 6;
+  const raised = k => [...swirl(25, 2, R, k), rect(24, 9, 24, 11, 'dg')];                  // held up beside his head, stick in his paw
+  const atMouth = k => [...swirl(19, 16, R, k), rect(23, 17, 24, 18, 'bd'), rect(9, 17, 10, 18, 'bd')];   // pressed to his mouth, both paws on it
+  const fr = [];
+  for (let k = 0; k < 4; k++) fr.push({ armR:'hold', eyes:'happy', blush:1, squash: k % 2, over:[...cap(k), ...raised(k)], d:160 });
+  fr.push({ armR:'mid', eyes:'open', blush:1, over:[...cap(4), ...swirl(22, 9, R, 4), rect(24, 15, 24, 16, 'dg')], d:120 });   // bringing it down
+  for (let k = 5; k < 9; k++) fr.push({ armL:'none', armR:'none', eyes:'closed', blush:1, teeth: k % 2 ? 'in' : 'out', nose: k % 2,
+                                        over:[...cap(k), ...atMouth(k)], d:180 });                                    // lick lick (chomp)
+  fr.push({ armR:'mid', eyes:'happy', blush:1, over:[...cap(9), ...swirl(22, 9, R, 9), rect(24, 15, 24, 16, 'dg')], d:120 });   // back up
+  return fr;
+}
+
+// on a swing, seen from the front: he swings toward you (bigger) and away from you (smaller),
+// rising at both ends of the swing, while the ropes stretch from the top bar to the seat
+function swingFrames() {
+  const PIV = [13, -6];
+  const line = (a, b, col) => { const out = [], n = Math.max(Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1]), 1);
+    for (let i = 0; i <= n; i++) out.push(px(Math.round(a[0] + (b[0] - a[0]) * i / n), Math.round(a[1] + (b[1] - a[1]) * i / n), col, 'w')); return out; };
+  const FRAME = [rect(-8, 20, 35, 21, 'ga', 'w'), rect(-8, 21, 35, 22, 'wd', 'w'), rect(-1, -7, 28, -6, 'wk', 'w'),
+                 ...line([-4, 20], [0, -6], 'wk'), ...line([-3, 20], [1, -6], 'wk'), ...line([31, 20], [27, -6], 'wk'), ...line([30, 20], [26, -6], 'wk')];
+  const BAR = [rect(-1, -7, 28, -6, 'wk', 'w')];                 // drawn again in front of him while he's swung away
+  const N = 12;
+  return [...Array(N)].map((_, k) => {
+    const a = Math.sin(k / N * 2 * Math.PI);                     // +1 = swung toward you, -1 = swung away
+    const vel = Math.cos(k / N * 2 * Math.PI);                   // > 0 = moving toward you
+    const earPose = Math.abs(a) > 0.85 ? 'up' : vel > 0 ? 'down' : 'out';   // float at the ends, swept back / flopping in between
+    const sc = 1 + 0.22 * a, lift = -Math.round(4 * a * a);
+    const at = ([c, r]) => [Math.round(PIV[0] + (c - PIV[0]) * sc), Math.round(PIV[1] + (r + lift - PIV[1]) * sc)];
+    const sl = at([3, 13]), sr = at([24, 13]);
+    const seat = [...line(sl, sr, 'wd'), ...line([sl[0], sl[1] + 1], [sr[0], sr[1] + 1], 'wk')];
+    const ropes = [...line([4, -5], sl, 'cl'), ...line([23, -5], sr, 'cl')];
+    const sw = Math.round(9 * sc);
+    const shadow = [rect(13 - sw, 20, 14 + sw, 20, 's', 'w')];
+    const near = a > 0.8, far = a < -0.8;
+    return { dy: -3 + lift, sit:1, noShadow:1, tail:'none', armL:'hold', armR:'hold', scale: sc, pivot: PIV, earPose,
+             eyes: near ? 'happy' : far ? 'closed' : 'open', blush: near ? 1 : 0,
+             under:[...FRAME, ...shadow, ...ropes, ...seat], over: a < 0 ? BAR : [], d:130 };
+  });
+}
+
+// disagreeing: frowns, shakes his head "no", wags a finger (tsk tsk), crosses his arms with a big red X
+function nopeFrames() {
+  // a clean 6x6 X with 2-pixel strokes, centred over his head
+  const X_MARK = [...Array(6)].flatMap((_, i) => [px(11 + i, -6 + i, 'ce'), px(16 - i, -6 + i, 'ce'),
+                                                   ...(i < 5 ? [px(12 + i, -6 + i, 'ce'), px(15 - i, -6 + i, 'ce')] : [])]);
+  const lines = k => k % 2 ? [px(2, 6, 'd'), px(1, 8, 'd'), px(2, 10, 'd')] : [px(25, 6, 'd'), px(26, 8, 'd'), px(25, 10, 'd')];
+  const finger = k => [px(22, 3, 'bd'), px(k % 2 ? 21 : 23, 2, 'bd'), px(k % 2 ? 20 : 24, 1, 'bd')];   // wagging pointer finger
+  const fr = [{ d:400 }, { eyes:'angry', d:350 }];
+  [-1, 1, -1, 1, -1, 0].forEach((x, k) => fr.push({ x, eyes:'closed', over: x ? lines(k) : [], d:90 }));   // head shake: no no no
+  for (let k = 0; k < 4; k++) fr.push({ armR:'up', eyes:'angry', teeth: k % 2 ? 'in' : 'out', over:finger(k), d:160 });   // tsk tsk
+  // arms folded across his chest (side arms hidden, two darker forearms crossing below his teeth)
+  const CROSSED = [rect(6, 12, 21, 14, 'b'), rect(6, 12, 21, 12, 'bd'), rect(6, 14, 21, 14, 'bd'),    // folded-arms band
+                   px(6, 13, 'bd'), px(21, 13, 'bd'), px(12, 14, 'bd'), px(13, 13, 'bd'), px(14, 12, 'bd')];   // outline + crossing crease
+  const folded = { armL:'none', armR:'none' };
+  fr.push({ ...folded, eyes:'angry', tail:'flat', dust:1, squash:1, over:[...CROSSED, ...X_MARK], d:200 },             // arms crossed, thump
+          { ...folded, eyes:'angry', over:[...CROSSED, ...X_MARK], d:800 },
+          { ...folded, eyes:'closed', over:CROSSED, d:400 });
+  return fr;
+}
+
+// disappointed: a long look, slow sad head shakes with droopy ears, a big sigh, a facepalm
+function sighFrames() {
+  const SIGH = [px(16, 12, 'd'), rect(17, 12, 18, 12, 'd'), rect(19, 11, 20, 11, 'd'), px(21, 10, 'd')];   // breath puff drifting out
+  const PALM = [rect(16, 7, 19, 10, 'bd')];                                                              // just a simple paw over his eye
+  const fr = [{ d:300 }, { eyes:'sad', d:600 }];                                                          // ...really?
+  [-1, 0, 1, 0, -1, 0, 1, 0].forEach(x => fr.push({ x, eyes:'closed', earsFlat:1, squash:1, d:200 }));   // slow head shake
+  fr.push({ eyes:'closed', earsFlat:1, squash:1, over:SIGH, d:600 },                                       // *sigh*
+          { eyes:'sad', earsFlat:1, armR:'none', squash:1, over:PALM, d:1000 },                            // facepalm
+          { eyes:'sad', earsFlat:1, squash:1, d:700 });
+  return fr;
+}
+
+// agreeing: happy nods, then a thumbs up with a wink, a sparkle and a green check mark
+function agreeFrames() {
+  // thumbs up: his normal arm, plus one small bump sticking up from it (the thumb, pointing up to the side)
+  const THUMB = [rect(22, 7, 23, 8, 'b')];
+  const WINK = [rect(9, 8, 10, 9, 'b', 'f'), rect(9, 9, 10, 9, 'k', 'f')];                                // left eye winks
+  const CHECK = [[10, -3], [11, -2], [12, -1], [13, -2], [14, -3], [15, -4], [16, -5], [17, -6]]
+    .flatMap(([c, r]) => [px(c, r, 'cg'), px(c, r + 1, 'cg')]);
+  const spark = (c, r) => [px(c, r, 'su'), px(c - 1, r, 'sr'), px(c + 1, r, 'sr'), px(c, r - 1, 'sr'), px(c, r + 1, 'sr')];
+  const fr = [{ d:300 }];
+  for (let k = 0; k < 4; k++) fr.push({ eyes:'happy', squash: k % 2, d:180 });                            // nod nod
+  fr.push({ eyes:'happy', blush:1, over:[...THUMB, ...spark(25, 6)], d:250 },                    // thumbs up!
+          { eyes:'happy', blush:1, over:[...THUMB, ...WINK, ...CHECK, ...spark(26, 5)], d:700 },
+          { eyes:'happy', blush:1, dy:-1, over:[...THUMB, ...CHECK, ...spark(25, 6)], d:300 },
+          { eyes:'happy', blush:1, d:400 });
+  return fr;
+}
+
+// ---- Animations ----------------------------------------------------------
+// card castle: place 8 cards one by one, celebrate with a hop... and the whole thing falls down
+function buildFrames() {
+  const fr = [];
+  for (let k = 0; k < PIECES.length; k++)
+    fr.push({ x:-8, castle:k, armR:'mid', held:1, d:220 }, { x:-8, castle:k + 1, d:260 });
+  fr.push(
+    { x:-8, castle:8, eyes:'happy', blush:1, armL:'up', armR:'up', d:600 },
+    { x:-8, castle:8, eyes:'happy', blush:1, squash:1, d:120 },
+    { x:-8, castle:8, eyes:'happy', blush:1, armL:'up', armR:'up', tail:'up', dy:-3, d:170 },
+    { x:-8, castle:8, squash:1, fall:1, dust:1, d:130 },
+    { x:-8, fall:2, armL:'up', armR:'up', dust:2, d:550 },        // shocked
+    { x:-8, fall:2, eyes:'closed', d:1000 },                     // sad
+  );
+  return fr;
+}
+// dig a hole, wave bye, climb down hand over hand and vanish... then pop back up
+function burrowFrames() {
+  const N = { armL:'none', armR:'none' };
+  const fr = [
+    { d:300 },
+    { hole:1, dust:1, d:200 },
+    { hole:2, dust:2, d:250 },
+    { hole:2, eyes:'happy', armR:'up', d:260 },
+    { hole:2, eyes:'happy', armR:'mid', d:260 },
+    { hole:2, eyes:'happy', armR:'up', d:260 },
+    // step into the hole, then plant both paws on the ground and lower himself down
+    { hole:2, dy:2, d:180 },
+    { hole:2, dy:4, d:180 },
+    { hole:2, dy:6,  rim:1, ...N, d:260 },
+    { hole:2, dy:8,  rim:1, ...N, eyes:'closed', d:260 },
+    { hole:2, dy:10, rim:1, ...N, d:300 },
+    { hole:2, dy:13, rim:1, ...N, d:300 },
+    { hole:2, dy:16, rim:1, ...N, d:300 },
+    { hole:2, dy:20, rim:1, ...N, d:400 },                       // only paws left on the edge
+    { hole:2, dy:30, d:700 },                                     // lets go: gone
+    { hole:1, dy:30, d:220 },
+    { dy:30, d:1200 },                                            // empty stage
+    { hole:1, dy:30, d:200 },
+    { hole:2, dy:30, d:300 },
+    // paws grab the edge and he pushes himself back up
+    { hole:2, dy:20, rim:1, ...N, d:400 },
+    { hole:2, dy:16, rim:1, ...N, d:220 },
+    { hole:2, dy:12, rim:1, ...N, eyes:'closed', d:220 },
+    { hole:2, dy:8,  rim:1, ...N, eyes:'closed', d:220 },
+    { hole:2, dy:6,  rim:1, ...N, d:200 },
+    { hole:2, dy:-2, armL:'up', armR:'up', tail:'up', eyes:'happy', d:180 },
+    { hole:2, squash:1, d:200 },
+    { hole:1, dust:1, d:200 },
+    { d:500 },
+  ];
+  return fr;
+}
+// walk right, turn around, walk back; legs alternate and the body bobs on each step
+function walkFrames() {
+  const step = (x, p, flip) => ({ x, flip, lift: p === 0 ? 'L' : p === 2 ? 'R' : null, squash: p % 2,
+                                  armL: p === 2 ? 'swing' : 'down', armR: p === 0 ? 'swing' : 'down' });
+  const fr = [];
+  for (let x = -8; x <= 6; x++) fr.push(step(x, (x + 8) % 4, 0));
+  for (let x = 6; x >= -8; x--) fr.push(step(x, (6 - x) % 4, 1));
+  return fr;
+}
+
+const MODES = {
+  idle: { d: 420, frames: [
+    {}, {}, { squash:1 }, { squash:1 },
+  ]},
+  gnaw: { d: 110, frames: [
+    { stick:1, armL:'hold', armR:'hold' },
+    { stick:1, armL:'hold', armR:'hold', teeth:'in', nose:1, chips:[[15,11]] },
+    { stick:1, armL:'hold', armR:'hold', chips:[[16,10],[12,11]] },
+    { stick:1, armL:'hold', armR:'hold', teeth:'in', nose:1, chips:[[17,8],[11,10]] },
+    { stick:1, armL:'hold', armR:'hold', squash:1, chips:[[18,7],[10,9]] },
+    { stick:1, armL:'hold', armR:'hold', teeth:'in', nose:1, squash:1, chips:[[19,8],[9,10]] },
+  ]},
+  slap: { once: true, d: 110, frames: [
+    { tail:'up', d:160 },
+    { tail:'up', squash:1, d:140 },
+    { tail:'flat', squash:1, eyes:'closed', dust:1, d:90 },
+    { tail:'flat', eyes:'closed', dust:2, d:110 },
+    { tail:'flat', dust:3 },
+    { tail:'rest', d:200 },
+  ]},
+  jump: { once: true, d: 80, frames: [
+    { squash:1, d:140 },
+    { dy:-2, armL:'mid', armR:'mid', tail:'up' },
+    { dy:-4, armL:'up',  armR:'up',  tail:'up' },
+    { dy:-5, armL:'up',  armR:'up',  tail:'up', d:160 },
+    { dy:-4, armL:'up',  armR:'up',  tail:'up' },
+    { dy:-2, armL:'mid', armR:'mid' },
+    { squash:1, d:160 },
+    { d:120 },
+  ]},
+  wave: { d: 200, frames: [
+    { armR:'up',  eyes:'happy' }, { armR:'mid', eyes:'happy' },
+  ]},
+  happy: { d: 150, frames: [
+    { eyes:'happy', blush:1 }, { dy:-1, eyes:'happy', blush:1, tail:'up', armL:'mid', armR:'mid' },
+    { eyes:'happy', blush:1, squash:1 }, { dy:-1, eyes:'happy', blush:1, tail:'up', armL:'mid', armR:'mid' },
+  ]},
+  sleep: { d: 650, frames: [
+    { eyes:'closed', zs:[[20,3]] },
+    { eyes:'closed', squash:1, zs:[[21,0]] },
+    { eyes:'closed', zs:[[22,-3],[20,3]] },
+    { eyes:'closed', squash:1, zs:[[22,-6],[21,0]] },
+  ]},
+  // hard-hat beaver lifting a log overhead, over and over
+  work: { d: 150, frames: [
+    { hat:1, squash:1, armL:'hold', armR:'hold', log:14, eyes:'closed', d:260 },
+    { hat:1, log:12 },
+    { hat:1, armL:'mid', armR:'mid', log:4, eyes:'closed', d:120 },
+    { hat:1, armL:'lift', armR:'lift', log:-1, eyes:'closed', sweat:[19,5], d:260 },
+    { hat:1, armL:'lift', armR:'lift', log:-1, tail:'up', sweat:[20,7], d:260 },
+    { hat:1, armL:'mid', armR:'mid', log:4, d:120 },
+    { hat:1, log:12 },
+    { hat:1, squash:1, armL:'hold', armR:'hold', log:14, dust:1, d:200 },
+  ]},
+  // paddling along with just the head above the water
+  swim: { d: 230, frames: [
+    { water:1, wave:0, armL:'paddle', splash:[[3,10],[2,11]] },
+    { water:1, wave:1, dy:1 },
+    { water:1, wave:2, armR:'paddle', splash:[[24,10],[25,11]] },
+    { water:1, wave:3, dy:1, tail:'up', splash:[[0,10]] },
+  ]},
+  build: { d: 240, frames: buildFrames() },
+  walk:  { d: 120, frames: walkFrames() },
+  burrow: { d: 150, frames: burrowFrames() },
+  dam:      { d: 200, frames: damFrames() },
+  dance:    { d: 150, frames: danceFrames() },
+  rain:     { d: 130, frames: rainFrames() },
+  fish:     { d: 300, frames: fishFrames() },
+  scared:   { d: 200, frames: scaredFrames() },
+  sneeze:   { d: 200, frames: sneezeFrames() },
+  brush:    { d: 110, frames: brushFrames() },
+  carry:    { d: 110, frames: carryFrames() },
+  dizzy:    { d: 150, frames: dizzyFrames() },
+  sunbathe: { d: 450, frames: sunbatheFrames() },
+  sunny:    { d: 300, loopFrom: 8, frames: sunnyFrames() },
+  angry:    { d: 120, frames: angryFrames() },
+  sad:      { d: 420, frames: sadFrames() },
+  shower:   { d: 120, frames: showerFrames() },
+  cook:     { d: 140, frames: cookFrames() },
+  bake:     { d: 150, frames: bakeFrames() },
+  party:    { d: 130, frames: celebrateFrames() },
+  toilet:   { d: 300, frames: toiletFrames() },
+  hands:    { d: 120, frames: handsFrames() },
+  dishes:   { d: 140, frames: dishesFrames() },
+  code:     { d: 130, frames: codeFrames() },
+  hack:     { d: 80,  frames: hackFrames() },
+  tv:       { d: 260, frames: tvFrames() },
+  juice:    { d: 260, frames: juiceFrames() },
+  soda:     { d: 280, frames: sodaFrames() },
+  water:    { d: 300, frames: waterFrames() },
+  cozy:     { d: 320, frames: cozyFrames() },
+  turn:     { d: 150, frames: turnFrames() },
+  kick:     { d: 150, frames: kickFrames() },
+  paint:    { d: 230, frames: paintFrames() },
+  game:     { d: 200, frames: gameFrames() },
+  snowman:  { d: 300, frames: snowmanFrames() },
+  angel:    { d: 200, frames: angelFrames() },
+  call:     { d: 220, frames: callFrames() },
+  tired:    { d: 350, frames: tiredFrames() },
+  wow:      { d: 200, frames: wowFrames() },
+  fit:      { d: 120, frames: fitFrames() },
+  lolly:    { d: 150, frames: lollyFrames() },
+  swing:    { d: 120, frames: swingFrames() },
+  nope:     { d: 200, frames: nopeFrames() },
+  sigh:     { d: 200, frames: sighFrames() },
+  agree:    { d: 200, frames: agreeFrames() },
+  bed:      (() => { const fr = bedFrames(); return { d: 300, loopFrom: fr.loop, frames: fr }; })(),
+  // munching an apple held in both paws, bite by bite
+  eat: { d: 170, frames: [
+    { armL:'none', armR:'none', paws:1, apple:0, d:300 },
+    { armL:'none', armR:'none', paws:1, apple:0, teeth:'in', nose:1 },
+    { armL:'none', armR:'none', paws:1, apple:1 },
+    { armL:'none', armR:'none', paws:1, apple:1, teeth:'in', nose:1, crumbs:[[11,16]] },
+    { armL:'none', armR:'none', paws:1, apple:1, crumbs:[[10,18]] },
+    { armL:'none', armR:'none', paws:1, apple:2, teeth:'in', nose:1, crumbs:[[16,16]] },
+    { armL:'none', armR:'none', paws:1, apple:2, crumbs:[[17,18]] },
+    { armL:'none', armR:'none', paws:1, apple:3, teeth:'in', nose:1, crumbs:[[12,17]] },
+    { armL:'none', armR:'none', paws:1, apple:3, d:250 },
+    { eyes:'happy', blush:1, d:350 },
+    { eyes:'happy', blush:1, squash:1, d:350 },
+  ]},
+};
+
+// ---- Transitions ---------------------------------------------------------
+// When you pick a new animation, the beaver eases from whatever pose it is in to the new one:
+// it climbs out of a hole if it is underground, walks over if it has to move, then blends
+// arms / height / position over a few frames while props (water, logs, cards...) fade in or out.
+const ARM_TOP = { down:9, swing:8, mid:6, up:4, hold:10, lift:1, paddle:7 };
+const PROPS = {   // name: [is it showing?, fields that describe it]
+  water:  [f => f.water,               ['water', 'wave']],
+  hole:   [f => f.hole,                ['hole']],
+  castle: [f => f.castle || f.fall,    ['castle', 'fall']],
+  log:    [f => f.log !== null,        ['log']],
+  stick:  [f => f.stick,               ['stick']],
+  apple:  [f => f.apple !== null || f.paws, ['apple', 'paws']],
+  hat:    [f => f.hat,                 ['hat']],
+  fx:     [f => (f.under && f.under.length) || (f.over && f.over.length), ['under', 'over']],
+};
+const lerp = (a, b, t) => a + (b - a) * t;
+// drop one-off particles (chips, Z's, dust...) so they don't freeze mid-air
+const settle = f => ({ ...DEF, ...f, chips:null, crumbs:null, splash:null, sweat:null, dust:0, zs:null,
+                       held:0, ear:0, nose:0, d:undefined, fade:undefined });
+
+function blend(a, b, n, d = 75) {
+  const out = [];
+  for (let k = 1; k < n; k++) {
+    const t = k / n, early = t < 0.5, f = { ...DEF, d };
+    f.x = Math.round(lerp(a.x, b.x, t));
+    f.dy = Math.round(lerp(a.dy, b.dy, t));
+    f.flip = early ? a.flip : b.flip;
+    for (const side of ['armL', 'armR']) {
+      const top = v => typeof v === 'number' ? v : ARM_TOP[v];   // mid-transition arms are numbers
+      const ta = top(a[side]), tb = top(b[side]);
+      f[side] = ta === undefined || tb === undefined ? (early ? a[side] : b[side]) : Math.round(lerp(ta, tb, t));
+    }
+    for (const key of ['eyes', 'tail', 'blush', 'teeth', 'lift', 'rim', 'earsFlat', 'bodyCol', 'noShadow', 'view', 'pivot', 'kick', 'earPose']) f[key] = early ? a[key] : b[key];
+    f.rot = lerp(a.rot || 0, b.rot || 0, t);                                     // falls / gets up smoothly
+    f.scale = a.scale || b.scale ? lerp(a.scale || 1, b.scale || 1, t) : 0;     // and eases in/out of depth
+    f.sit = a.sit || b.sit ? 1 : 0;                   // keep the sitting legs for the whole sit-down / stand-up
+    f.squash = n > 2 && k === Math.floor(n / 2) ? 1 : 0;           // a tiny settle in the middle
+    f.fade = {};
+    for (const [name, [has, keys]] of Object.entries(PROPS)) {
+      const ha = !!has(a), hb = !!has(b);
+      if (!ha && !hb) continue;
+      const src = ha && hb ? (early ? a : b) : ha ? a : b;
+      for (const key of keys) f[key] = src[key];
+      f.fade[name] = ha && hb ? 1 : ha ? 1 - t : t;
+    }
+    out.push(f);
+  }
+  return out;
+}
+
+function transition(from, m) {
+  let a = settle(from);
+  const b = settle(MODES[m].frames[0]);
+  const out = [];
+  if (a.dy > 4) {                                   // underground: climb back out of the hole first
+    const N = { armL:'none', armR:'none', rim:1, hole:2, x:a.x, flip:a.flip };
+    for (const dy of [20, 16, 12, 8, 6].filter(v => v < a.dy)) out.push({ ...DEF, ...N, dy, d:150 });
+    a = { ...DEF, x:a.x, flip:a.flip, hole:2, armL:'mid', armR:'mid' };
+    out.push({ ...a, d:150 });
+  }
+  if (Math.abs(b.x - a.x) > 1) {                    // too far away: walk over there
+    const dir = Math.sign(b.x - a.x);
+    const stand = { ...DEF, x:a.x, flip: dir < 0 ? 1 : 0 };
+    out.push(...blend(a, stand, 3), { ...stand, d:75 });
+    for (let x = a.x + dir, p = 0; x !== b.x; x += dir, p++)
+      out.push({ ...stand, x, d:110, squash: p % 2, lift: p % 4 === 0 ? 'L' : p % 4 === 2 ? 'R' : null,
+                 armL: p % 4 === 2 ? 'swing' : 'down', armR: p % 4 === 0 ? 'swing' : 'down' });
+    a = { ...stand, x:b.x };
+  }
+  out.push(...blend(a, b, 4));
+  return out;
+}
+
+// ---- Loop ----------------------------------------------------------------
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+cv.width = COLS * CELL; cv.height = ROWS * CELL;
+
+let mode = 'idle', seq = MODES.idle, i = 0, t = 0, last = performance.now(), shown = { ...DEF };
+let nextBlink = last + 1500, blinkUntil = 0, nextTwitch = last + 4000, twitchUntil = 0;
+
+function play(s) { seq = s; i = 0; t = 0; }
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('[data-mode]').forEach(b =>
+    b.setAttribute('aria-pressed', String(b.dataset.mode === m)));
+  play({ d: 75, next: m, frames: transition(shown, m) });
+}
+
+function tick(now) {
+  t += now - last; last = now;
+  if (t >= (seq.frames[i].d || seq.d)) {
+    t = 0; i++;
+    if (i >= seq.frames.length) {
+      if (seq.next) play(MODES[seq.next]);          // transition finished: start the real animation
+      else if (seq.once) setMode('idle');           // one-shot (jump, slap) eases back to idle
+      else i = seq.loopFrom || 0;                   // some animations loop only their last part
+    }
+  }
+  if (now > nextBlink) { blinkUntil = now + 140; nextBlink = now + 2000 + Math.random() * 2500; }
+  if (now > nextTwitch) { twitchUntil = now + 220; nextTwitch = now + 3500 + Math.random() * 4000; }
+
+  shown = { ...DEF, ...seq.frames[i] };
+  const f = { ...shown };
+  if (now < blinkUntil && f.eyes === 'open') f.eyes = 'closed';
+  if (now < twitchUntil && seq === MODES.idle) f.ear = 1;
+
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  draw(ctx, f, OX, OY, CELL);
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+document.getElementById('modes').addEventListener('click', e => {
+  const m = e.target.dataset && e.target.dataset.mode; if (m) setMode(m);
+});
+cv.addEventListener('click', () => setMode('slap'));
+addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); setMode('jump'); } });
+
+// ---- Sprite sheet export (current animation, 30x30 cells per frame, 4px per art pixel) ----
+document.getElementById('export').addEventListener('click', () => {
+  const frames = MODES[mode].frames, s = 4;
+  const sheet = document.createElement('canvas');
+  sheet.width = frames.length * COLS * s; sheet.height = ROWS * s;
+  const g = sheet.getContext('2d');
+  frames.forEach((fr, k) => draw(g, { ...DEF, ...fr }, OX + k * COLS, OY, s));
+  const a = document.createElement('a');
+  a.download = `beaver-${mode}-${frames.length}frames.png`;
+  a.href = sheet.toDataURL('image/png');
+  a.click();
+});
+</script>
+</body>
+</html>
