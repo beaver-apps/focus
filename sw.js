@@ -1,8 +1,8 @@
 /* Beaver Focus service worker: the app works offline, updates wait for you, notifications open the app.
    The build writes VERSION and FILES; a new build means a new VERSION, so the page shows "New version ready". */
-const VERSION = 'focus-a118587b00e2';                     // filled in by the build (a hash of every file)
-const FILES = ["./","assets/gif-DcuKe3cD.js","assets/index-CNVSLje2.js","assets/silkscreen-latin-CtPo2yA5.woff2","icons/apple-touch-icon.png","icons/favicon-32.png","icons/favicon.svg","icons/icon-192.png","icons/icon-512.png","icons/icon-maskable-512.png","index.html","manifest.webmanifest","studio.html"];
-const RELEASE = "v2.5 · Nameplate";                     // e.g. "v2.1 · Name Tags"
+const VERSION = 'focus-b7d7d3d586d4';                     // filled in by the build (a hash of every file)
+const FILES = ["./","assets/gif-CVIFkb74.js","assets/index-DFbRCClo.js","assets/silkscreen-latin-CtPo2yA5.woff2","icons/apple-touch-icon.png","icons/favicon-32.png","icons/favicon.svg","icons/icon-192.png","icons/icon-512.png","icons/icon-maskable-512.png","index.html","manifest.webmanifest","studio.html"];
+const RELEASE = "v2.5.1 · Blue Ball";                     // e.g. "v2.1 · Name Tags"
 // the Chinese / Japanese pixel fonts aren't precached (most people never need them): kept here once they're used,
 // in their own cache that survives updates
 const LAZY_CACHE = 'bf-lazy-fonts-v1', LAZY = /\/fonts\/fusion-pixel\/[^/]+\.woff2$/;
