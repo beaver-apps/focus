@@ -50,7 +50,7 @@ I just live my day: brekfast, building dams, playtime, a cozy fire, and bed.
   ambient, jazz, 8-bit, bossa, music box, marimba and synthwave. They start when you lock in, and I wear headphones.
 - **My routine.** With no timer running I follow your real clock (see my day below).
 - **Stats.** Minutes, sessions (as acorns), streaks, your best day and a 14-day chart.
-- **Phone, tablet or computer.** It looks right at every size, even a tiny window next to your other apps.
+- **Phone, tablet or computer.** It looks right at every size, a phone held sideways too, even a tiny window next to your other apps.
   Install it to your home screen or desktop, and it works offline. Back steps out of whatever is open, like any app.
 - **Gentle alerts.** A jingle, a buzz on phones and a notification when a session ends.
 - **Light and dark**, plus **calm mode** for gentler motion.
@@ -92,7 +92,7 @@ Then your stats and settings go to a private gist on your own GitHub account, us
 ## Versions
 
 Every update has a name. You can see them all in **Settings → What's new**.
-The newest is **v2.6 "Clonk"**.
+The newest is **v2.7 "Sideways"**.
 
 
 ## About this repo
