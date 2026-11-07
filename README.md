@@ -54,6 +54,8 @@ I just live my day: brekfast, building dams, playtime, a cozy fire, and bed.
   Install it to your home screen or desktop, and it works offline.
 - **Gentle alerts.** A jingle, a buzz on phones and a notification when a session ends.
 - **Light and dark**, plus **calm mode** for gentler motion.
+- **Languages.** I speak English, Svenska, Dansk, Norsk, Suomi, Deutsch, Español, Français, 中文 and 日本語.
+  I pick yours from your device the first time, and you can switch in Settings. I make typos in all of them :P
 - **Sync between devices** through a private GitHub gist, if you want it.
 - **Download any animation as a GIF**, or open the **Studio** to see every one of my moves.
 - **Buttons that say what they do**, with a little pixel tip when you rest the mouse on them.
@@ -90,7 +92,7 @@ Then your stats and settings go to a private gist on your own GitHub account, us
 ## Versions
 
 Every update has a name. You can see them all in **Settings → What's new**.
-The newest is **v2.2 "Signed with Acorns"**.
+The newest is **v2.3 "Polyglot Paws"**.
 
 
 ## About this repo
@@ -106,6 +108,8 @@ Free to use, change and share for **noncommercial** purposes only, under the
 Required Notice: Copyright 2026 BwunLevain (https://github.com/BwunLevain)
 
 The pixel font Silkscreen is by The Silkscreen Project Authors and keeps its own
-license, the [SIL Open Font License 1.1](fonts/OFL.txt).
+license, the [SIL Open Font License 1.1](fonts/OFL.txt). The Chinese and Japanese pixel font is
+[Fusion Pixel Font](https://github.com/TakWolf/fusion-pixel-font) by TakWolf, also under the SIL Open Font License
+(`public/fonts/fusion-pixel/`).
 
 <p align="center"><img src="docs/readme/beaver-code.gif" width="120" alt=""><br><sub>Now go lock in. I'll be rigth here.</sub></p>
