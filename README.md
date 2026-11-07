@@ -92,7 +92,7 @@ Then your stats and settings go to a private gist on your own GitHub account, us
 ## Versions
 
 Every update has a name. You can see them all in **Settings → What's new**.
-The newest is **v2.4 "Way Back Home"**.
+The newest is **v2.5 "Nameplate"**.
 
 
 ## About this repo
