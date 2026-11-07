@@ -51,7 +51,7 @@ I just live my day: brekfast, building dams, playtime, a cozy fire, and bed.
 - **My routine.** With no timer running I follow your real clock (see my day below).
 - **Stats.** Minutes, sessions (as acorns), streaks, your best day and a 14-day chart.
 - **Phone, tablet or computer.** It looks right at every size, even a tiny window next to your other apps.
-  Install it to your home screen or desktop, and it works offline.
+  Install it to your home screen or desktop, and it works offline. Back steps out of whatever is open, like any app.
 - **Gentle alerts.** A jingle, a buzz on phones and a notification when a session ends.
 - **Light and dark**, plus **calm mode** for gentler motion.
 - **Languages.** I speak English, Svenska, Dansk, Norsk, Suomi, Deutsch, Español, Français, 中文 and 日本語.
@@ -92,7 +92,7 @@ Then your stats and settings go to a private gist on your own GitHub account, us
 ## Versions
 
 Every update has a name. You can see them all in **Settings → What's new**.
-The newest is **v2.3 "Polyglot Paws"**.
+The newest is **v2.4 "Way Back Home"**.
 
 
 ## About this repo

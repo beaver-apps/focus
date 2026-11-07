@@ -2,7 +2,7 @@
   "name": "Beaver Focus",
   "short_name": "Beaver Focus",
   "description": "A pixel beaver who locks in with you: pomodoro timer, lo-fi music and a cozy daily routine.",
-  "id": "./",
+  "id": "/focus/",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
