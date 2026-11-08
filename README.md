@@ -92,7 +92,7 @@ Then your stats and settings go to a private gist on your own GitHub account, us
 ## Versions
 
 Every update has a name. You can see them all in **Settings → What's new**.
-The newest is **v2.7.1 "Snug"**.
+The newest is **v2.7.2 "Steady Arm"**.
 
 
 ## About this repo
