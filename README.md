@@ -102,10 +102,10 @@ The source code is private for now.
 
 ## License
 
-Free to use, change and share for **noncommercial** purposes only, under the
-[PolyForm Noncommercial License 1.0.0](LICENSE.md). Nobody may sell it or use it to make money.
+Copyright 2026 BwunLevain (https://github.com/BwunLevain). **All rights reserved.**
 
-Required Notice: Copyright 2026 BwunLevain (https://github.com/BwunLevain)
+You're welcome to use the app, install it and share the link, but please don't copy, re-upload, change or sell it,
+or reuse the beaver and the art. The details are in [LICENSE.md](LICENSE.md).
 
 The pixel font Silkscreen is by The Silkscreen Project Authors and keeps its own
 license, the [SIL Open Font License 1.1](fonts/OFL.txt). The Chinese and Japanese pixel font is
