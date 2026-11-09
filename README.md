@@ -57,7 +57,7 @@ I just live my day: brekfast, building dams, playtime, a cozy fire, and bed.
 - **Languages.** I speak English, Svenska, Dansk, Norsk, Suomi, Deutsch, Español, Français, 中文 and 日本語.
   I pick yours from your device the first time, and you can switch in Settings. I make typos in all of them :P
 - **Sync between devices** through a private GitHub gist, if you want it.
-- **Download any animation as a GIF**, or open the **Studio** to see every one of my moves.
+- **Pick any of my moves** (sorted into Moods, Work, Play, Home and Weather), **download it as a GIF**, or open the **Studio** to see every one.
 - **Buttons that say what they do**, with a little pixel tip when you rest the mouse on them.
   Who made me is at the bottom of the screen (on phones, at the bottom of Settings).
 
@@ -92,7 +92,7 @@ Then your stats and settings go to a private gist on your own GitHub account, us
 ## Versions
 
 Every update has a name. You can see them all in **Settings → What's new**.
-The newest is **v2.7.3 "Clear Print"**.
+The newest is **v2.8.0 "Tidy Moves"**.
 
 
 ## About this repo
