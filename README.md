@@ -92,7 +92,7 @@ Then your stats and settings go to a private gist on your own GitHub account, us
 ## Versions
 
 Every update has a name. You can see them all in **Settings → What's new**.
-The newest is **v2.8.0 "Tidy Moves"**.
+The newest is **v2.9.0 "Thumb Reach"**.
 
 
 ## About this repo
