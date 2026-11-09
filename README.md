@@ -92,7 +92,7 @@ Then your stats and settings go to a private gist on your own GitHub account, us
 ## Versions
 
 Every update has a name. You can see them all in **Settings → What's new**.
-The newest is **v2.9.0 "Thumb Reach"**.
+The newest is **v2.9.1 "Straight Line"**.
 
 
 ## About this repo
