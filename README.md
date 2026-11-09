@@ -92,7 +92,7 @@ Then your stats and settings go to a private gist on your own GitHub account, us
 ## Versions
 
 Every update has a name. You can see them all in **Settings → What's new**.
-The newest is **v2.10.0 "Lately"**.
+The newest is **v2.10.1 "Little Pictures"**.
 
 
 ## About this repo
